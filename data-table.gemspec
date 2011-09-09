@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.version     = DataTable::VERSION
   s.authors     = ["Steve Erickson", "Jeff Fraser"]
   s.email       = ["sixfeetover@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/sixfeetover/data-table"
   s.summary     = %q{Turn arrays of hashes or models in to an HTML table.}
   s.description = %q{data-table is a simple gem that provides a DSL for allowing you do turn an array of hashes or ActiveRecord objects into an HTML table.}
 
