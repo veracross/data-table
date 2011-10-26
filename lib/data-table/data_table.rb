@@ -294,7 +294,7 @@ class DataTable
   def subtotal(column_name, function=nil, &b)
     function_or_block = function || b
     f = function && block_given? ? [function, b] : function_or_block
-    @subtotals << {column_name => f}
+    @subtotals.merge!({column_name => f})
   end
   
   def has_subtotals?
@@ -311,7 +311,7 @@ class DataTable
   def total(column_name, function=nil, &b)
     function_or_block = function || b
     f = function && block_given? ? [function, b] : function_or_block
-    @totals << {column_name => f}
+    @totals.merge!({column_name => f})
   end
   
   def has_totals?

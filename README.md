@@ -1,11 +1,15 @@
 # DataTable
 
+## Credits
+Nearly all of the code for this was written by @smerickson. 
+
 ## Install
 ```ruby
 gem install data-table
 ```
 
 or, in your Gemfile
+
 ```ruby
 gem 'data-table'
 ```
