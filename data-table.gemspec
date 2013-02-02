@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
 
   s.rubyforge_project = "data-table"
 
+  s.add_development_dependency 'rake'
   s.add_development_dependency 'rspec'
 
   s.files         = `git ls-files`.split("\n")
