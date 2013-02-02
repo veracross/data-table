@@ -13,7 +13,6 @@
 # columns: an array of hashes of the column specs for this table
 #
 # group_by: an array of columns to group on
-# pivot_on: an array of columns to pivot on
 #
 # subtotals: an array of hashes that contain the subtotal information for each column that should be subtotaled
 # totals: an array of hashes that contain the total information for each column that should be totaled
@@ -26,7 +25,7 @@ module DataTable
     #############
     # CONFIG
     #############
-    attr_reader :grouped_data, :pivoted_data, :subtotals, :totals, :subtotal_calculations, :total_calculations
+    attr_reader :collection, :grouped_data, :subtotals, :totals, :subtotal_calculations, :total_calculations, :columns
     attr_accessor :id, :title, :css_class, :empty_text, :alternate_rows, :alternate_cols, :display_header, :hide_if_empty, :repeat_headers_for_groups, :custom_headers
 
     def initialize(collection)
@@ -35,8 +34,8 @@ module DataTable
 
       @columns = []
 
-      @groupings, @pivot_columns = [], []
-      @pivoted_data, @grouped_data = false, false
+      @groupings = []
+      @grouped_data = false
       @subtotals, @totals = {}, {}
     end
 
@@ -57,51 +56,21 @@ module DataTable
       @row_attributes = nil
     end
 
-    def self.default_css_styles
-      <<-CSS_STYLE
-        .data_table {width: 100%; empty-cells: show}
-        .data_table td, .data_table th {padding: 3px}
-
-        .data_table caption {font-size: 2em; font-weight: bold}
-
-        .data_table thead {}
-        .data_table thead th {background-color: #ddd; border-bottom: 1px solid #bbb;}
-
-        .data_table tbody {}
-        .data_table tbody tr.alt {background-color: #eee;}
-
-        .data_table .group_header th {text-align: left;}
-
-        .data_table .subtotal {}
-        .data_table .subtotal td {border-top: 1px solid #000;}
-
-        .data_table tfoot {}
-        .data_table tfoot td {border-top: 1px solid #000;}
-
-        .empty_data_table {text-align: center; background-color: #ffc;}
-
-        /* Data Types */
-        .data_table .number, .data_table .money {text-align: right}
-        .data_table .text {text-align: left}
-      CSS_STYLE
-    end
-
     # Define a new column for the table
     def column(id, title="", opts={}, &b)
       @columns << DataTable::Column.new(id, title, opts, &b)
     end
 
     def prepare_data
-      self.pivot_data! if @pivoted_data
       self.group_data! if @grouped_data
 
       self.calculate_subtotals! if has_subtotals?
       self.calculate_totals! if has_totals?
     end
 
-    #############
+    ####################
     # GENERAL RENDERING
-    #############
+    ####################
 
     def self.render(collection, &blk)
       # make a new table
@@ -114,7 +83,7 @@ module DataTable
       t.prepare_data
 
       # render the table
-      t.render.html_safe
+      t.render
     end
 
     def render
@@ -252,20 +221,6 @@ module DataTable
       html << "</tbody>"
     end
 
-
-    #############
-    # PIVOTING
-    #############
-
-    def pivot_on(pivot_column)
-      @pivoted_data = true
-      @pivot_column = pivot_column
-    end
-
-    def pivot_data!
-      @collection.pivot_on
-    end
-
     #############
     # TOTALS AND SUBTOTALS
     #############
@@ -332,7 +287,7 @@ module DataTable
     def calculate_subtotals!
       @subtotal_calculations = Hash.new { |h,k| h[k] = {} }
 
-      #ensure that we are dealing with a grouped results set.
+      # ensure that we are dealing with a grouped results set.
       unless @grouped_data
         raise 'Subtotals only work with grouped results sets'
       end
@@ -347,7 +302,6 @@ module DataTable
     end
 
     def calculate(data, column_name, function)
-
       col = @columns.select { |column| column.name == column_name }
 
       if function.is_a?(Proc)

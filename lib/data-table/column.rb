@@ -7,7 +7,7 @@ module DataTable
     def initialize(name, description="", opts={}, &renderer)
       @name, @description, = name, description
       @data_type = opts[:data_type] || :text
-      @help_text = opts[:help_text] || ""
+      @help_text = opts[:help_text]
       @css_class = opts[:css_class]
       @attributes = opts[:attributes] || {}
       @width = opts[:width]
@@ -19,9 +19,9 @@ module DataTable
     end
 
     def render_cell(cell_data, row=nil, row_index=0, col_index=0)
+      cell_data = cell_data.to_s
       html = ""
       if @renderer && row
-        cell_data = cell_data.to_s
         html << case @renderer.arity
               when 1; @renderer.call(cell_data).to_s
               when 2; @renderer.call(cell_data, row).to_s
@@ -30,7 +30,7 @@ module DataTable
               when 5; @renderer.call(cell_data, row, row_index, self, col_index).to_s
             end
       else
-        html << cell_data.to_s
+        html << cell_data
       end
 
       html << "</td>"

@@ -1,3 +1,3 @@
-class DataTable
-  VERSION = "1.0.1"
+module DataTable
+  VERSION = "1.1beta"
 end
