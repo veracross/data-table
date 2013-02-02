@@ -1,4 +1,5 @@
 # DataTable
+[![Build Status](https://secure.travis-ci.org/veracross/data-table.png)](http://travis-ci.org/veracross/data-table)
 
 DataTable renders collections (an array of hashes or ActiveRecord models) as HTML tables.
 
