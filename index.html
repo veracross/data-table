@@ -28,32 +28,121 @@
         </ul>
       </header>
       <section>
-        <h3>Welcome to GitHub Pages.</h3>
+        <h1>DataTable</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p><a href="http://travis-ci.org/veracross/data-table"><img src="https://secure.travis-ci.org/veracross/data-table.png" alt="Build Status"></a>
+<a href="https://codeclimate.com/github/veracross/data-table"><img src="https://codeclimate.com/github/veracross/data-table.png" alt="Code Climate"></a></p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p>DataTable renders collections (an array of hashes or ActiveRecord models) as HTML tables.</p>
+
+<h2>Install</h2>
+
+<div class="highlight"><pre><span class="n">gem</span> <span class="n">install</span> <span class="n">data</span><span class="o">-</span><span class="n">table</span>
+</pre></div>
+
+<p>or, in your Gemfile</p>
+
+<div class="highlight"><pre><span class="n">gem</span> <span class="s1">'data-table'</span>
+</pre></div>
+
+<h3>Basic Usage</h3>
+
+<p>the normal usage is to call the <code>DataTable.render()</code> method and pass it a collection.  The method also takes a block which can be used to configure the table.  The column method takes a symbol for the first parameter.  If the symbol matches a key in the @collection, then that value is printed in the cell.</p>
+
+<div class="highlight"><pre><span class="no">DataTable</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="vi">@collection</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_1</span><span class="p">,</span> <span class="s2">"Title"</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_2</span><span class="p">,</span> <span class="s2">"Title 2"</span>
+<span class="k">end</span>
+</pre></div>
+
+<h3>Custom Cell Renderer</h3>
+
+<p>Sometimes you want to use Ruby code to customize the value for a cell.  This can be done by passing a block to the .column method</p>
+
+<div class="highlight"><pre><span class="no">DataTable</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="vi">@collection</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+   <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_id</span><span class="p">,</span> <span class="s2">"Title"</span> <span class="k">do</span> <span class="o">|</span><span class="n">value</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">column_index</span><span class="o">|</span>
+     <span class="s2">"The value is: </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+   <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+
+<p>You don't need to pass in all of the block parameters; just the ones up to the one you need.</p>
+
+<p><strong>Tip</strong> The column_id doesn't need to be an actual key in the collection.  You can just make up an arbitrary column id and use the block renderer to customize the value for a column.</p>
+
+<h3>All Table Configuration Options</h3>
+
+<pre><code>id: the html id
+title: the title of the data table
+subtitle: the subtitle of the data table
+css_class: an extra css class to get applied to the table
+empty_text: the text to display of the collection is empty
+display_header =&gt; false: hide the column headers for the data table
+alternate_rows =&gt; false: turn off alternating of row css classes
+alternate_cols =&gt; true: turn on alternating of column classes, defaults to false
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<h3>Totals</h3>
 
-<h3>Designer Templates</h3>
+<p>It is possible to setup totals &amp; subtotals.   Total columns take the name of the column that should be totaled.</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>They also take a default aggregate function name and/or a block
+If only a default function is given, then it is used to calculate the total
+If only a block is given then only it is used to calculated the total
+If both a block and a function are given then the default aggregate function is called first then its result is passed into the block for further processing.</p>
 
-<h3>Rather Drive Stick?</h3>
+<div class="highlight"><pre><span class="no">DataTable</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="vi">@collection</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_1</span><span class="p">,</span> <span class="s2">"Title"</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_2</span><span class="p">,</span> <span class="s2">"Title 2"</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_3</span><span class="p">,</span> <span class="s2">"Title 3"</span>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+  <span class="n">t</span><span class="o">.</span><span class="n">total</span> <span class="ss">:column_1</span><span class="p">,</span> <span class="ss">:sum</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">total</span> <span class="ss">:column_2</span> <span class="k">do</span> <span class="o">|</span><span class="n">values</span><span class="o">|</span>
 
-<h3>Authors and Contributors</h3>
+  <span class="k">end</span>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+  <span class="n">t</span><span class="o">.</span><span class="n">total</span><span class="p">(</span><span class="ss">:column_3</span><span class="p">,</span> <span class="ss">:sum</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">aggregate_total</span><span class="o">|</span>
+    <span class="n">format_money</span><span class="p">(</span><span class="n">aggregate_total</span><span class="p">)</span>
+  <span class="k">end</span>
 
-<h3>Support or Contact</h3>
+<span class="k">end</span>
+</pre></div>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Possible default functions: <code>:sum</code>, <code>:avg</code>, <code>:min</code>, <code>:max</code></p>
+
+<h3>Sub Totals</h3>
+
+<p>SubTotals work in a similar way to Totals.  The main difference is that you need to call group by to specificy the different subtotal groupings</p>
+
+<div class="highlight"><pre><span class="no">DataTable</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="vi">@collection</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_1</span><span class="p">,</span> <span class="s2">"Title"</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_2</span><span class="p">,</span> <span class="s2">"Title 2"</span>
+  <span class="n">t</span><span class="o">.</span><span class="n">column</span> <span class="ss">:column_3</span><span class="p">,</span> <span class="s2">"Title 3"</span>
+
+  <span class="n">t</span><span class="o">.</span><span class="n">group_by</span> <span class="ss">:column_1</span>
+
+  <span class="n">t</span><span class="o">.</span><span class="n">subtotal</span> <span class="ss">:column_2</span><span class="p">,</span> <span class="ss">:sum</span>
+
+<span class="k">end</span>
+</pre></div>
+
+<p>It is possible to use <code>group_by</code> on its own without subtotaling.</p>
+
+<p>You can also combine subtotals &amp; totals in the same table.</p>
+
+<h2>Credits</h2>
+
+<p>Nearly all of the code for this was written by <a href="https://github.com/smerickson" class="user-mention">@smerickson</a>, and later gemified by <a href="https://github.com/sixfeetover" class="user-mention">@sixfeetover</a>.</p>
+
+<h2>License</h2>
+
+<p>Copyright (c) 2012-2013 Jeff Fraser (Veracross LLC) <a href="mailto:jfraser@breuer.com">jfraser@breuer.com</a></p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/veracross">veracross</a></p>
