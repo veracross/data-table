@@ -13,13 +13,13 @@ describe DataTable::Column do
 
   it "should render a td tag" do
     column = DataTable::Column.new(:thing)
-    column.render_cell("Data").
+    column.render_cell("Data"). \
       should eq(%{<td class='thing text' >Data</td>})
   end
 
   it "should render the column header" do
     column = DataTable::Column.new(:thing, 'Thing')
-    column.render_column_header
+    column.render_column_header \
     .should eq(%{<th class='thing text' >Thing</th>})
   end
 
