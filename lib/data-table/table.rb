@@ -18,7 +18,6 @@
 # totals: an array of hashes that contain the total information for each column that should be totaled
 #
 ##
-
 module DataTable
   class Table
 
@@ -240,34 +239,16 @@ module DataTable
       html << "</tr>"
     end
 
-    # define a new total column definition.
-    # total columns take the name of the column that should be totaled
-    # they also take a default aggregate function name and/or a block
-    # if only a default function is given, then it is used to calculate the total
-    # if only a block is given then only it is used to calculated the total
-    # if both a block and a function are given then the default aggregate function is called first
-    # then its result is passed into the block for further processing.
     def subtotal(column_name, function=nil, &b)
-      function_or_block = function || b
-      f = function && block_given? ? [function, b] : function_or_block
-      @subtotals.merge!({column_name => f})
+      total_row @subtotals, column_name, function, &b
     end
 
     def has_subtotals?
       !@subtotals.empty?
     end
 
-    # define a new total column definition.
-    # total columns take the name of the column that should be totaled
-    # they also take a default aggregate function name and/or a block
-    # if only a default function is given, then it is used to calculate the total
-    # if only a block is given then only it is used to calculated the total
-    # if both a block and a function are given then the default aggregate function is called first
-    # then its result is passed into the block for further processing.
     def total(column_name, function=nil, &b)
-      function_or_block = function || b
-      f = function && block_given? ? [function, b] : function_or_block
-      @totals.merge!({column_name => f})
+      total_row @totals, column_name, function, &b
     end
 
     def has_totals?
@@ -336,5 +317,21 @@ module DataTable
     def calculate_min(collection, column_name)
       collection.collect{|r| r[column_name].to_f }.min
     end
+
+    private
+
+    # Define a new total column definition.
+    # total columns take the name of the column that should be totaled
+    # they also take a default aggregate function name and/or a block
+    # if only a default function is given, then it is used to calculate the total
+    # if only a block is given then only it is used to calculated the total
+    # if both a block and a function are given then the default aggregate function is called first
+    # then its result is passed into the block for further processing.
+    def total_row(collection, column_name, function=nil, &b)
+      function_or_block = function || b
+      f = function && block_given? ? [function, b] : function_or_block
+      collection.merge!({column_name => f})
+    end
+
   end
 end

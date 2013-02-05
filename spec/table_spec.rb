@@ -4,10 +4,10 @@ describe DataTable::Table do
   context "with a non-empty collection of hashes" do
     let(:collection) {
       [
-        {:name => 'Luke Skywalker', :class => 'Jedi Knight', :world => 'Star Wars'},
-        {:name => 'Emporer Palpatine', :class => 'Sith Lord', :world => 'Star Wars'},
-        {:name => 'Mithrander', :class => 'Wizard', :world => 'Middle Earth'},
-        {:name => 'Aragorn', :class => 'Ranger', :world => 'Middle Earth'}
+        {:name => 'Luke Skywalker', :class => 'Jedi Knight', :world => 'Star Wars', :power_level => 50},
+        {:name => 'Emporer Palpatine', :class => 'Sith Lord', :world => 'Star Wars', :power_level => 95},
+        {:name => 'Mithrander', :class => 'Wizard', :world => 'Middle Earth', :power_level => 9001},
+        {:name => 'Aragorn', :class => 'Ranger', :world => 'Middle Earth', :power_level => 80}
       ]
     }
 
@@ -36,6 +36,31 @@ describe DataTable::Table do
       data_table.prepare_data
       data_table.collection.should eq(collection.group_by {|g| g[grouping_column]})
       data_table.render.should eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='name text' >Name</th><th class='class text' >Class</th></tr></thead><tbody class='star_wars'><tr class='group_header'><th colspan='2'>Star Wars</th></tr><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr></tbody><tbody class='middle_earth'><tr class='group_header'><th colspan='2'>Middle Earth</th></tr><tr class='row_0 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_1 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
+    end
+
+    it "should do totaling" do
+      data_table.column :power_level
+      data_table.total :power_level, :sum
+      data_table.calculate_totals!
+      data_table.total_calculations.should eq({:power_level => 9226.0})
+    end
+
+    it "should do custom formatting for the total" do
+      data_table.column :power_level
+      data_table.total :power_level, :avg do |average|
+        "#{average / 100.0}%"
+      end
+      data_table.calculate_totals!
+      data_table.total_calculations.should eq({:power_level => "23.065%"})
+    end
+
+    it "should do sub-totaling" do
+      data_table.group_by :world
+      data_table.column :power_level
+      data_table.subtotal :power_level, :sum
+
+      data_table.prepare_data
+      data_table.subtotal_calculations.should eq({"Star Wars" => {:power_level => 145.0}, "Middle Earth" => {:power_level => 9081.0}})
     end
   end
 
