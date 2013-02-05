@@ -70,21 +70,6 @@ module DataTable
     ####################
     # GENERAL RENDERING
     ####################
-
-    def self.render(collection, &blk)
-      # make a new table
-      t = self.new(collection)
-
-      # yield it to the block for configuration
-      yield t
-
-      # modify the data structure if necessary and do calculations
-      t.prepare_data
-
-      # render the table
-      t.render
-    end
-
     def render
       render_data_table
     end
