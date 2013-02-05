@@ -54,6 +54,15 @@ describe DataTable::Table do
       data_table.total_calculations.should eq({:power_level => "23.065%"})
     end
 
+    it "should do custom totalling" do
+      data_table.column :power_level
+      data_table.total :power_level do |collection|
+        collection.inject(0) {|sum, c| sum + c[:power_level] }
+      end
+      data_table.calculate_totals!
+      data_table.total_calculations.should eq({:power_level => 9226.0})
+    end
+
     it "should do sub-totaling" do
       data_table.group_by :world
       data_table.column :power_level
