@@ -71,6 +71,14 @@ describe DataTable::Table do
       data_table.prepare_data
       data_table.subtotal_calculations.should eq({"Star Wars" => {:power_level => 145.0}, "Middle Earth" => {:power_level => 9081.0}})
     end
+
+    it "should render a custom header" do
+      data_table.custom_header do
+        th 'Two Columns', :colspan => 2
+        th 'One Column', :colspan => 1
+      end
+      data_table.render_custom_table_header.should eq(%{<tr class='custom-header'><th class="" colspan="2">Two Columns</th><th class="" colspan="1">One Column</th></tr>})
+    end
   end
 
 	context "with an empty collection" do
