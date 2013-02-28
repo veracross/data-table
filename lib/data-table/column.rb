@@ -6,7 +6,7 @@ module DataTable
 
     def initialize(name, description="", opts={}, &renderer)
       @name, @description, = name, description
-      @data_type = opts[:data_type] || :text
+      @data_type = opts[:data_type]
       @help_text = opts[:help_text]
       @css_class = opts[:css_class]
       @attributes = opts[:attributes] || {}
@@ -19,7 +19,8 @@ module DataTable
     end
 
     def render_cell(cell_data, row=nil, row_index=0, col_index=0)
-      cell_data = cell_data.to_s
+      @data_type ||= type(cell_data)
+
       html = ""
       if @renderer && row
         html << case @renderer.arity
@@ -30,7 +31,7 @@ module DataTable
               when 5; @renderer.call(cell_data, row, row_index, self, col_index).to_s
             end
       else
-        html << cell_data
+        html << cell_data.to_s
       end
 
       html << "</td>"
@@ -56,6 +57,19 @@ module DataTable
       class_names << @data_type.to_s
       class_names << @css_class
       class_names.compact.join(' ')
+    end
+
+    # Set a CSS class name based on data type
+    # For backward compatability, 'string' is renamed to 'text'
+    # For convenience, all Numerics (e.g. Integer, BigDecimal, etc.) just return 'numeric'
+    def type(data)
+      if data.is_a? Numeric
+        'numeric'
+      elsif data.is_a? String
+        'text'
+      else
+        data.class.to_s.downcase
+      end
     end
   end
 end

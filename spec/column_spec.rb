@@ -20,7 +20,7 @@ describe DataTable::Column do
   it "should render the column header" do
     column = DataTable::Column.new(:thing, 'Thing')
     column.render_column_header \
-    .should eq(%{<th class='thing text' >Thing</th>})
+    .should eq(%{<th class='thing ' >Thing</th>})
   end
 
   it "should add custom attributes to the td tag" do
@@ -38,6 +38,6 @@ describe DataTable::Column do
   it "should use the block for rendering" do
     square = lambda {|v| v.to_i ** 2}
     column = DataTable::Column.new(:amount, 'Amount', &square)
-    column.render_cell(5, {:amount => 5}).should eq(%{<td class='amount text' >25</td>})
+    column.render_cell(5, {:amount => 5}).should eq(%{<td class='amount numeric' >25</td>})
   end
 end
