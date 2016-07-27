@@ -4,32 +4,32 @@ module DataTable
     attr_reader :name
     attr_accessor :display, :index, :options, :css_class, :attributes
 
-    def initialize(name, description="", opts={}, &renderer)
-      @name, @description, = name, description
+    def initialize(name, description = "", opts = {}, &renderer)
+      @name = name
+      @description = description
       @data_type = opts[:data_type]
       @help_text = opts[:help_text]
       @css_class = opts[:css_class]
       @attributes = opts[:attributes] || {}
       @width = opts[:width]
       @options = opts
-
       @display = true
       @index = 0
       @renderer = renderer
     end
 
-    def render_cell(cell_data, row=nil, row_index=0, col_index=0)
+    def render_cell(cell_data, row = nil, row_index = 0, col_index = 0)
       @data_type ||= type(cell_data)
 
       html = ""
       if @renderer && row
         html << case @renderer.arity
-              when 1; @renderer.call(cell_data).to_s
-              when 2; @renderer.call(cell_data, row).to_s
-              when 3; @renderer.call(cell_data, row, row_index).to_s
-              when 4; @renderer.call(cell_data, row, row_index, self).to_s
-              when 5; @renderer.call(cell_data, row, row_index, self, col_index).to_s
-            end
+                when 1 then @renderer.call(cell_data).to_s
+                when 2 then @renderer.call(cell_data, row).to_s
+                when 3 then @renderer.call(cell_data, row, row_index).to_s
+                when 4 then @renderer.call(cell_data, row, row_index, self).to_s
+                when 5 then @renderer.call(cell_data, row, row_index, self, col_index).to_s
+                end
       else
         html << cell_data.to_s
       end

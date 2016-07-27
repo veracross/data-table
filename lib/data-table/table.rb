@@ -1,26 +1,25 @@
-##
-# Config Options
-#
-# id: the html id
-# title: the title of the data table
-# subtitle: the subtitle of the data table
-# css_class: an extra css class to get applied to the table
-# empty_text: the text to display of the collection is empty
-# display_header => false: hide the column headers for the data table
-# alternate_rows => false: turn off alternating of row css classes
-# alternate_cols => true: turn on alternating of column classes, defaults to false
-#
-# columns: an array of hashes of the column specs for this table
-#
-# group_by: an array of columns to group on
-#
-# subtotals: an array of hashes that contain the subtotal information for each column that should be subtotaled
-# totals: an array of hashes that contain the total information for each column that should be totaled
-#
-##
 module DataTable
+  ##
+  # Config Options
+  #
+  # id: the html id
+  # title: the title of the data table
+  # subtitle: the subtitle of the data table
+  # css_class: an extra css class to get applied to the table
+  # empty_text: the text to display of the collection is empty
+  # display_header => false: hide the column headers for the data table
+  # alternate_rows => false: turn off alternating of row css classes
+  # alternate_cols => true: turn on alternating of column classes, defaults to false
+  #
+  # columns: an array of hashes of the column specs for this table
+  #
+  # group_by: an array of columns to group on
+  #
+  # subtotals: an array of hashes that contain the subtotal information for each column that should be subtotaled
+  # totals: an array of hashes that contain the total information for each column that should be totaled
+  #
+  ##
   class Table
-
     #############
     # CONFIG
     #############
@@ -29,13 +28,13 @@ module DataTable
 
     def initialize(collection)
       @collection = collection
+      @grouped_collection = nil
       default_options!
-
       @columns = []
-
       @groupings = []
       @grouped_data = false
-      @subtotals, @totals = {}, {}
+      @subtotals = {}
+      @totals = {}
     end
 
     def default_options!
@@ -56,15 +55,15 @@ module DataTable
     end
 
     # Define a new column for the table
-    def column(id, title="", opts={}, &b)
+    def column(id, title = "", opts = {}, &b)
       @columns << DataTable::Column.new(id, title, opts, &b)
     end
 
     def prepare_data
-      self.group_data! if @grouped_data
+      group_data! if @grouped_data
 
-      self.calculate_subtotals! if has_subtotals?
-      self.calculate_totals! if has_totals?
+      calculate_subtotals! if subtotals?
+      calculate_totals! if totals?
     end
 
     ####################
@@ -76,14 +75,14 @@ module DataTable
 
     def render_data_table
       html = "<table id='#{@id}' class='data_table #{@css_class}' cellspacing='0' cellpadding='0'>"
-        html << "<caption>#{@title}</caption>" if @title
-        html << render_data_table_header if @display_header
-        if @collection.any?
-          html << render_data_table_body(@collection)
-          html << render_totals if has_totals?
-        else
-          html << "<tr><td class='empty_data_table' colspan='#{@columns.size}'>#{@empty_text}</td></tr>"
-        end
+      html << "<caption>#{@title}</caption>" if @title
+      html << render_data_table_header if @display_header
+      if @collection.any?
+        html << render_data_table_body(@collection)
+        html << render_totals if totals?
+      else
+        html << "<tr><td class='empty_data_table' colspan='#{@columns.size}'>#{@empty_text}</td></tr>"
+      end
       html << "</table>"
     end
 
@@ -93,17 +92,17 @@ module DataTable
       html << render_custom_table_header unless @custom_headers.empty?
 
       html << "<tr>"
-        @columns.each do |col|
-          html << col.render_column_header
-        end
+      @columns.each do |col|
+        html << col.render_column_header
+      end
       html << "</tr></thead>"
     end
 
     def render_custom_table_header
       html = "<tr class='custom-header'>"
-        @custom_headers.each do |h|
-          html << "<th class=\"#{h[:css]}\" colspan=\"#{h[:colspan]}\">#{h[:text]}</th>"
-        end
+      @custom_headers.each do |h|
+        html << "<th class=\"#{h[:css]}\" colspan=\"#{h[:colspan]}\">#{h[:text]}</th>"
+      end
       html << "</tr>"
     end
 
@@ -119,7 +118,7 @@ module DataTable
       html = ""
       collection.each_with_index do |row, row_index|
         css_class = @alternate_rows && row_index % 2 == 1 ? 'alt ' : ''
-        if @row_style && style = @row_style.call(row, row_index)
+        if @row_style && style == @row_style.call(row, row_index)
           css_class << style
         end
 
@@ -137,10 +136,10 @@ module DataTable
       end
 
       html = "<tr class='row_#{row_index} #{css_class}' #{attributes}>"
-        @columns.each_with_index do |col, col_index|
-          cell = row[col.name] rescue nil
-          html << col.render_cell(cell, row, row_index, col_index)
-        end
+      @columns.each_with_index do |col, col_index|
+        cell = row[col.name] rescue nil
+        html << col.render_cell(cell, row, row_index, col_index)
+      end
       html << "</tr>"
     end
 
@@ -154,7 +153,7 @@ module DataTable
     end
 
     def th(header_text, options)
-      @custom_headers << options.merge(:text => header_text)
+      @custom_headers << options.merge(text: header_text)
     end
 
     def row_attributes(&b)
@@ -166,14 +165,18 @@ module DataTable
     #############
 
     # TODO: allow for group column only, block only and group column and block
-    def group_by(group_column, &blk)
+    def group_by(group_column, group_level = nil, &_blk)
       @grouped_data = true
-      @groupings = group_column
-      @columns.reject!{|c| c.name == group_column}
+      @groupings << { group_column => group_level.values[0] }
+      @columns.reject! { |c| c.name == group_column }
     end
 
     def group_data!
-      @collection = @collection.group_by {|row| row[@groupings] }
+      if @groupings.count > 1
+        @collection = collection.group_by_recursive(@groupings)
+      else
+        @collection = collection.group_by { |row| row[@groupings[0].keys[0]] }
+      end
     end
 
     def render_grouped_data_table_body(collection)
@@ -184,24 +187,28 @@ module DataTable
       html
     end
 
-    def render_group_header(group_header)
-      html = "<tr class='group_header'>"
-      if @repeat_headers_for_groups
-        @columns.each_with_index do |col, i|
-          html << (i == 0 ? "<th>#{group_header}</th>" : col.render_column_header)
-        end
-      else
-        html << "<th colspan='#{@columns.size}'>#{group_header}</th>"
-      end
+    def render_group_header(group_header, group_level = nil)
+      html =  "<tr class='group_header'>"
+      html << "<th colspan='#{@columns.size}'>#{group_header}</th>"
       html << "</tr>"
+      repeat_headers(html) if @repeat_headers_for_groups
       html
     end
 
+    def repeat_headers(html)
+      html << "<tr class='col_headers'>"
+      @columns.each_with_index do |col, _i|
+        html << col.render_column_header
+      end
+      html << "</tr>"
+    end
+
     def render_group(group_header, group_data)
-      html = "<tbody class='#{group_header.to_s.downcase.gsub(/[^A-Za-z0-9]+/, '_')}'>" #replace non-letters and numbers with '_'
-        html << render_group_header(group_header)
-        html << render_rows(group_data)
-        html << render_subtotals(group_header, group_data) if has_subtotals?
+      # replace non-letters and numbers with '_'
+      html = "<tbody class='#{group_header.to_s.downcase.gsub(/[^A-Za-z0-9]+/, '_')}'>"
+      html << render_group_header(group_header)
+      html << render_rows(group_data)
+      html << render_subtotals(group_header, group_data) if subtotals?
       html << "</tbody>"
     end
 
@@ -210,33 +217,33 @@ module DataTable
     #############
     def render_totals
       html = "<tfoot><tr>"
-        @columns.each do |col|
-          html << col.render_cell(@total_calculations[col.name])
-        end
+      @columns.each do |col|
+        html << col.render_cell(@total_calculations[col.name])
+      end
       html << "</tr></tfoot>"
     end
 
-    def render_subtotals(group_header, group_data)
+    def render_subtotals(group_header, _group_data)
       html = "<tr class='subtotal'>"
-        @columns.each do |col|
-          html << col.render_cell(@subtotal_calculations[group_header][col.name])
-        end
+      @columns.each do |col|
+        html << col.render_cell(@subtotal_calculations[group_header][col.name])
+      end
       html << "</tr>"
     end
 
-    def subtotal(column_name, function=nil, &b)
+    def subtotal(column_name, function = nil, &b)
       total_row @subtotals, column_name, function, &b
     end
 
-    def has_subtotals?
+    def subtotals?
       !@subtotals.empty?
     end
 
-    def total(column_name, function=nil, &b)
+    def total(column_name, function = nil, &b)
       total_row @totals, column_name, function, &b
     end
 
-    def has_totals?
+    def totals?
       !@totals.empty?
     end
 
@@ -244,50 +251,51 @@ module DataTable
       @total_calculations = {}
 
       @totals.each do |column_name, function|
-        collection = @collection.is_a?(Hash) ? @collection.values.flatten : @collection
+        collection = []
+        if @collection.is_a?(Hash)
+          @collection.each_pair_recursive {|k, v| collection.concat(v) }
+        else
+          @collection
+        end
         result = calculate(collection, column_name, function)
         @total_calculations[column_name] = result
       end
     end
 
     def calculate_subtotals!
-      @subtotal_calculations = Hash.new { |h,k| h[k] = {} }
+      @subtotal_calculations = Hash.new { |h, k| h[k] = {} }
 
       # ensure that we are dealing with a grouped results set.
-      unless @grouped_data
-        raise 'Subtotals only work with grouped results sets'
-      end
+      raise 'Subtotals only work with grouped results sets' unless @grouped_data
 
-      @collection.each do |group_name, group_data|
+      @collection.each_pair_recursive do |group_name, group_data|
         @subtotals.each do |column_name, function|
           result = calculate(group_data, column_name, function)
           @subtotal_calculations[group_name][column_name] = result
         end
       end
-
     end
 
     def calculate(data, column_name, function)
       col = @columns.select { |column| column.name == column_name }
-
       if function.is_a?(Proc)
         case function.arity
-          when 1; function.call(data)
-          when 2; function.call(data, col.first)
+        when 1 then function.call(data)
+        when 2 then function.call(data, col.first)
         end
       elsif function.is_a?(Array)
-        result = self.send("calculate_#{function[0].to_s}", data, column_name)
+        result = send("calculate_#{function[0]}", data, column_name)
         case function[1].arity
-          when 1; function[1].call(result)
-          when 2; function[1].call(result, col.first)
+        when 1 then function[1].call(result)
+        when 2 then function[1].call(result, col.first)
         end
       else
-        self.send("calculate_#{function.to_s}", data, column_name)
+        send("calculate_#{function}", data, column_name)
       end
     end
 
     def calculate_sum(collection, column_name)
-      collection.inject(0) {|sum, row| sum += row[column_name].to_f }
+      collection.inject(0) { |sum, row| sum + row[column_name].to_f }
     end
 
     def calculate_avg(collection, column_name)
@@ -296,11 +304,11 @@ module DataTable
     end
 
     def calculate_max(collection, column_name)
-      collection.collect{|r| r[column_name].to_f }.max
+      collection.collect { |r| r[column_name].to_f }.max
     end
 
     def calculate_min(collection, column_name)
-      collection.collect{|r| r[column_name].to_f }.min
+      collection.collect { |r| r[column_name].to_f }.min
     end
 
     private
@@ -312,11 +320,10 @@ module DataTable
     # if only a block is given then only it is used to calculated the total
     # if both a block and a function are given then the default aggregate function is called first
     # then its result is passed into the block for further processing.
-    def total_row(collection, column_name, function=nil, &b)
+    def total_row(collection, column_name, function = nil, &b)
       function_or_block = function || b
       f = function && block_given? ? [function, b] : function_or_block
-      collection.merge!({column_name => f})
+      collection.merge!(column_name => f)
     end
-
   end
 end
