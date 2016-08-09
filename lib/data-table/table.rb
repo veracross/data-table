@@ -218,11 +218,12 @@ module DataTable
       html = ""
       collection.each_pair do |key, val|
         if val.is_a?(Hash)
-          html ||= render_group_header(key)
-          render_group_recursive(val)
+          html << render_group_header(key)
+          html << render_group_recursive(val)
         else
           html << render_group_header(key)
           html << render_rows(val)
+          html << render_subtotals(key, val) if subtotals?
         end
       end
       html
