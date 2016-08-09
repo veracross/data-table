@@ -165,7 +165,7 @@ module DataTable
     #############
 
     # TODO: allow for group column only, block only and group column and block
-    def group_by(group_column, group_level = nil, &_blk)
+    def group_by(group_column, group_level, &_blk)
       @grouped_data = true
       @groupings << { group_column => group_level.values[0] }
       @columns.reject! { |c| c.name == group_column }
@@ -188,7 +188,9 @@ module DataTable
     end
 
     def render_group_header(group_header, group_level = nil)
-      html =  "<tr class='group_header'>"
+      css_classes = ["group_header"]
+      css_classes << ["level_#{group_level}"] unless group_level.nil?
+      html =  "<tr class='#{css_classes.join(' ')}'>"
       html << "<th colspan='#{@columns.size}'>#{group_header}</th>"
       html << "</tr>"
       repeat_headers(html) if @repeat_headers_for_groups
@@ -206,10 +208,24 @@ module DataTable
     def render_group(group_header, group_data)
       # replace non-letters and numbers with '_'
       html = "<tbody class='#{group_header.to_s.downcase.gsub(/[^A-Za-z0-9]+/, '_')}'>"
-      html << render_group_header(group_header)
-      html << render_rows(group_data)
-      html << render_subtotals(group_header, group_data) if subtotals?
+      html << render_group_header(group_header, 0)
+      html << render_group_recursive(group_data)
+      html << render_subtotals(group_header, group_data) if subtotals? && !group_data.is_a?(Hash)
       html << "</tbody>"
+    end
+
+    def render_group_recursive(collection)
+      html = ""
+      collection.each_pair do |key, val|
+        if val.is_a?(Hash)
+          html ||= render_group_header(key)
+          render_group_recursive(val)
+        else
+          html << render_group_header(key)
+          html << render_rows(val)
+        end
+      end
+      html
     end
 
     #############
@@ -255,7 +271,7 @@ module DataTable
         if @collection.is_a?(Hash)
           @collection.each_pair_recursive {|k, v| collection.concat(v) }
         else
-          @collection
+          collection = @collection
         end
         result = calculate(collection, column_name, function)
         @total_calculations[column_name] = result

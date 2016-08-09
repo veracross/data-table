@@ -29,7 +29,7 @@ describe DataTable::Table do
     it "should group the records" do
       grouping_column = :world
 
-      data_table.group_by grouping_column
+      data_table.group_by grouping_column, level: 0
       data_table.column(:name, 'Name')
       data_table.column(:class, 'Class')
       expect(data_table.grouped_data).to be true
@@ -64,7 +64,7 @@ describe DataTable::Table do
     end
 
     it "should do sub-totaling" do
-      data_table.group_by :world
+      data_table.group_by :world, level: 0
       data_table.column :power_level
       data_table.subtotal :power_level, :sum
 

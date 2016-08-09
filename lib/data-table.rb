@@ -10,10 +10,10 @@ module DataTable
 
     # yield it to the block for configuration
     yield t
-    byebug
+
     # modify the data structure if necessary and do calculations
     t.prepare_data
-    byebug
+
     # render the table
     t.render
   end
