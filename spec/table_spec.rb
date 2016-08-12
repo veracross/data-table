@@ -35,14 +35,14 @@ describe DataTable::Table do
       expect(data_table.grouped_data).to be true
       data_table.prepare_data
       expect(data_table.collection).to eq(collection.group_by {|g| g[grouping_column]})
-      expect(data_table.render).to eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='name ' >Name</th><th class='class ' >Class</th></tr></thead><tbody class='star_wars'><tr class='group_header'><th colspan='2'>Star Wars</th></tr><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr></tbody><tbody class='middle_earth'><tr class='group_header'><th colspan='2'>Middle Earth</th></tr><tr class='row_0 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_1 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
+      expect(data_table.render).to eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='name ' >Name</th><th class='class ' >Class</th></tr></thead><tbody class='star_wars'><tr class='group_header level_0'><th colspan='2'>Star Wars</th></tr><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr></tbody><tbody class='middle_earth'><tr class='group_header level_0'><th colspan='2'>Middle Earth</th></tr><tr class='row_0 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_1 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
     end
 
     it "should do totaling" do
       data_table.column :power_level
       data_table.total :power_level, :sum
       data_table.calculate_totals!
-      expect(data_table.total_calculations).to eq({:power_level => 9226.0})
+      expect(data_table.total_calculations).to eq([{:power_level=>9226.0}])
     end
 
     it "should do custom formatting for the total" do
@@ -51,7 +51,7 @@ describe DataTable::Table do
         "#{average / 100.0}%"
       end
       data_table.calculate_totals!
-      expect(data_table.total_calculations).to eq({:power_level => "23.065%"})
+      expect(data_table.total_calculations).to eq([{:power_level=>"23.065%"}])
     end
 
     it "should do custom totalling" do
@@ -60,7 +60,7 @@ describe DataTable::Table do
         collection.inject(0) { |sum, c| sum + c[:power_level] }
       end
       data_table.calculate_totals!
-      expect(data_table.total_calculations).to eq(power_level: 9226.0)
+      expect(data_table.total_calculations).to eq([{:power_level=>9226}])
     end
 
     it "should do sub-totaling" do
@@ -69,7 +69,7 @@ describe DataTable::Table do
       data_table.subtotal :power_level, :sum
 
       data_table.prepare_data
-      expect(data_table.subtotal_calculations).to eq({"Star Wars" => {:power_level => 145.0}, "Middle Earth" => {:power_level => 9081.0}})
+      expect(data_table.subtotal_calculations).to eq({"Star Wars"=>[{:power_level=>{:sum=>145.0}}], "Middle Earth"=>[{:power_level=>{:sum=>9081.0}}]})
     end
 
     it "should render a custom header" do

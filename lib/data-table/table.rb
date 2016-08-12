@@ -20,11 +20,12 @@ module DataTable
   #
   ##
   class Table
-    #############
-    # CONFIG
-    #############
-    attr_reader :collection, :grouped_data, :subtotals, :totals, :subtotal_calculations, :total_calculations, :columns
-    attr_accessor :id, :title, :css_class, :empty_text, :alternate_rows, :alternate_cols, :display_header, :hide_if_empty, :repeat_headers_for_groups, :custom_headers
+    attr_reader :collection, :grouped_data, :subtotals, :totals,
+                :subtotal_calculations, :total_calculations, :columns
+
+    attr_accessor :id, :title, :css_class, :empty_text,
+                  :alternate_rows, :alternate_cols, :display_header, :hide_if_empty,
+                  :repeat_headers_for_groups, :custom_headers
 
     def initialize(collection)
       @collection = collection
@@ -33,8 +34,8 @@ module DataTable
       @columns = []
       @groupings = []
       @grouped_data = false
-      @subtotals = {}
-      @totals = {}
+      @subtotals = []
+      @totals = []
     end
 
     def default_options!
@@ -118,7 +119,7 @@ module DataTable
       html = ""
       collection.each_with_index do |row, row_index|
         css_class = @alternate_rows && row_index % 2 == 1 ? 'alt ' : ''
-        if @row_style && style == @row_style.call(row, row_index)
+        if @row_style && style = @row_style.call(row, row_index)
           css_class << style
         end
 
@@ -132,7 +133,7 @@ module DataTable
       if row_attributes.nil?
         attributes = ''
       else
-        attributes = row_attributes.map {|attr, val| "#{attr}='#{val}'"}.join " "
+        attributes = row_attributes.map { |attr, val| "#{attr}='#{val}'" }.join " "
       end
 
       html = "<tr class='row_#{row_index} #{css_class}' #{attributes}>"
@@ -165,9 +166,13 @@ module DataTable
     #############
 
     # TODO: allow for group column only, block only and group column and block
-    def group_by(group_column, group_level, &_blk)
+    def group_by(group_column, index = nil, &_blk)
+      if index.nil? && @groupings.count >= 1
+        raise "an index is required when using multiple groupings."
+      end
       @grouped_data = true
-      @groupings << { group_column => group_level.values[0] }
+      level = {group_column => (index.nil? ? 0 : index.values[0])}
+      @groupings << level
       @columns.reject! { |c| c.name == group_column }
     end
 
@@ -187,9 +192,9 @@ module DataTable
       html
     end
 
-    def render_group_header(group_header, group_level = nil)
+    def render_group_header(group_header, index = nil)
       css_classes = ["group_header"]
-      css_classes << ["level_#{group_level}"] unless group_level.nil?
+      css_classes << ["level_#{index}"] unless index.nil?
       html =  "<tr class='#{css_classes.join(' ')}'>"
       html << "<th colspan='#{@columns.size}'>#{group_header}</th>"
       html << "</tr>"
@@ -209,21 +214,25 @@ module DataTable
       # replace non-letters and numbers with '_'
       html = "<tbody class='#{group_header.to_s.downcase.gsub(/[^A-Za-z0-9]+/, '_')}'>"
       html << render_group_header(group_header, 0)
-      html << render_group_recursive(group_data)
-      html << render_subtotals(group_header, group_data) if subtotals? && !group_data.is_a?(Hash)
+      if group_data.is_a? Array
+        html << render_rows(group_data)
+        html << render_subtotals(group_header, group_data) if subtotals?
+      elsif group_data.is_a? Hash
+        html << render_group_recursive(group_data)
+      end
       html << "</tbody>"
     end
 
-    def render_group_recursive(collection)
+    def render_group_recursive(collection, index = 1)
       html = ""
-      collection.each_pair do |key, val|
-        if val.is_a?(Hash)
-          html << render_group_header(key)
-          html << render_group_recursive(val)
+      collection.each_pair do |group_header, group_data|
+        if group_data.is_a?(Hash)
+          html << render_group_header(group_header, index)
+          html << render_group_recursive(group_data, index + 1)
         else
-          html << render_group_header(key)
-          html << render_rows(val)
-          html << render_subtotals(key, val) if subtotals?
+          html << render_group_header(group_header, index)
+          html << render_rows(group_data)
+          html << render_subtotals(group_header, group_data) if subtotals?
         end
       end
       html
@@ -233,81 +242,113 @@ module DataTable
     # TOTALS AND SUBTOTALS
     #############
     def render_totals
-      html = "<tfoot><tr>"
-      @columns.each do |col|
-        html << col.render_cell(@total_calculations[col.name])
+      html = "<tfoot>"
+      @total_calculations.each_with_index do |totals_row, index|
+        html << "<tr class='total index_#{index}'>"
+        @columns.each do |col|
+          value = totals_row[col.name] ||= nil
+          html << col.render_cell(value)
+        end
+        html << "</tr>"
       end
-      html << "</tr></tfoot>"
+      html << "</tfoot>"
     end
 
-    def render_subtotals(group_header, _group_data)
-      html = "<tr class='subtotal'>"
-      @columns.each do |col|
-        html << col.render_cell(@subtotal_calculations[group_header][col.name])
+    def render_subtotals(group_header, _group_data = nil)
+      html = ""
+      @subtotal_calculations[group_header].each_with_index do |group, index|
+        html << "<tr class='subtotal index_#{index}'>"
+        @columns.each do |col|
+          value = group[col.name] ? group[col.name].values[0] : nil
+          html << col.render_cell(value)
+        end
+        html << "</tr>"
       end
-      html << "</tr>"
+      html
     end
 
-    def subtotal(column_name, function = nil, &b)
-      total_row @subtotals, column_name, function, &b
+    def subtotal(column_name, function = nil, index = {index: 0}, &b)
+      raise "You must supply an index value" if @subtotals.count >= 1 && index.nil?
+      total_row @subtotals, column_name, function, index[:index], &b
     end
 
     def subtotals?
       !@subtotals.empty?
     end
 
-    def total(column_name, function = nil, &b)
-      total_row @totals, column_name, function, &b
+    def total(column_name, function = nil, index = {index: 0}, &block)
+      raise "You must supply an index value" if @totals.count >= 1 && index.nil?
+      total_row @totals, column_name, function, index[:index], &block
     end
 
     def totals?
       !@totals.empty?
     end
 
+    # TODO: Refactor to shorten method. Also revise tests.
     def calculate_totals!
-      @total_calculations = {}
-
-      @totals.each do |column_name, function|
-        collection = []
+      @total_calculations = []
+      @totals.compact.each do |total|
         if @collection.is_a?(Hash)
-          @collection.each_pair_recursive {|k, v| collection.concat(v) }
-        else
-          collection = @collection
+          collection = []
+          @collection.each_pair_recursive { |k, v| collection.concat(v) }
         end
-        result = calculate(collection, column_name, function)
-        @total_calculations[column_name] = result
+        collection = @collection if @collection.is_a? Array
+        result = {total.keys.first => calculate(collection, total.keys.first, total.values.first)}
+        @total_calculations << result
       end
     end
 
     def calculate_subtotals!
-      @subtotal_calculations = Hash.new { |h, k| h[k] = {} }
-
       # ensure that we are dealing with a grouped results set.
       raise 'Subtotals only work with grouped results sets' unless @grouped_data
 
+      @subtotal_calculations = Hash.new { |h, k| h[k] = [] }
       @collection.each_pair_recursive do |group_name, group_data|
-        @subtotals.each do |column_name, function|
-          result = calculate(group_data, column_name, function)
-          @subtotal_calculations[group_name][column_name] = result
+        @subtotals.compact.each_with_index do |subtotal, index|
+          result = calculate(group_data, subtotal.first[0], subtotal.first[1])
+          subtotal_row = {subtotal.first[0] => {subtotal.first[1] => result}}
+          @subtotal_calculations[group_name] << subtotal_row
         end
       end
     end
 
+    # TODO: Write test for this
     def calculate(data, column_name, function)
-      col = @columns.select { |column| column.name == column_name }
+      column = @columns.select { |column| column.name == column_name }
       if function.is_a?(Proc)
-        case function.arity
-        when 1 then function.call(data)
-        when 2 then function.call(data, col.first)
-        end
+        calculate_with_proc(function, data, column)
+      elsif function.is_a?(Array) && function[1].is_a?(Proc)
+        calculate_array_and_proc(function, data, column_name)
       elsif function.is_a?(Array)
-        result = send("calculate_#{function[0]}", data, column_name)
-        case function[1].arity
-        when 1 then function[1].call(result)
-        when 2 then function[1].call(result, col.first)
-        end
+        calculate_many(function, data, column_name)
       else
         send("calculate_#{function}", data, column_name)
+      end
+    end
+
+    def calculate_with_proc(function, data, column = nil)
+      case function.arity
+      when 1 then function.call(data)
+      when 2 then function.call(data, column.first)
+      end
+    end
+
+    def calculate_array_and_proc(function, data, column = nil)
+      result = send("calculate_#{function[0]}", data, column)
+      case function[1].arity
+      when 1 then function[1].call(result)
+      when 2 then function[1].call(result, column.first)
+      end
+    end
+
+    def calculate_many(function, data, column_name)
+      function.each do |func|
+        if func.is_a? Array
+          send("calculate_#{func[0]}", data, column_name)
+        else
+          send("calculate_#{func}", data, column_name)
+        end
       end
     end
 
@@ -337,10 +378,10 @@ module DataTable
     # if only a block is given then only it is used to calculated the total
     # if both a block and a function are given then the default aggregate function is called first
     # then its result is passed into the block for further processing.
-    def total_row(collection, column_name, function = nil, &b)
-      function_or_block = function || b
-      f = function && block_given? ? [function, b] : function_or_block
-      collection.merge!(column_name => f)
+    def total_row(collection, column_name, function = nil, index = nil, &block)
+      function_or_block = function || block
+      f = function && block_given? ? [function, block] : function_or_block
+      collection[index] = {column_name => f}
     end
   end
 end

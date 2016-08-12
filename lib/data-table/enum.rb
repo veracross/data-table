@@ -1,6 +1,5 @@
 # Custom Enumerable methods
 module Enumerable
-
   # Use a set of provided groupings to transform a flat array of
   # hashes into a nested hash.
   # groupings should be passed as an array of hashes.
