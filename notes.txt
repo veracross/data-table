@@ -1,0 +1,109 @@
+def test_func(myvar = nil)
+  myvar ||= ['test']
+  othervar = 55
+  yield(othervar, myvar)
+end
+
+test_func do |var1, var2|
+  puts "var1: #{var1.inspect}, var2: #{var2.inspect}"
+end
+
+
+[['Yale', 'Math', []],[]]
+
+{"Homework"=>[
+              {:score=>{[:avg, #<Proc:0x007f85c984f2a0@examples/all_features.rb:65>]=>"Score Avg 98.0"}},
+              [{:points=>{[:avg, #<Proc:0x007f85c984f188@examples/all_features.rb:69>]=>"Points Avg 2.0"}}],
+              [{:karma=>{[:avg, #<Proc:0x007f85c984f0c0@examples/all_features.rb:73>]=>"Karma Avg 10.0"}}]],
+ "Test"=>[{:score=>{[:avg, #<Proc:0x007f85c984f2a0@examples/all_features.rb:65>]=>"Score Avg 89.0"}}, [{:points=>{[:avg, #<Proc:0x007f85c984f188@examples/all_features.rb:69>]=>"Points Avg 2.0"}}], [{:karma=>{[:avg, #<Proc:0x007f85c984f0c0@examples/all_features.rb:73>]=>"Karma Avg 15.0"}}]]}
+
+{"Homework"=>[
+              {
+                :score=>{[:avg, #<Proc:0x007fcd11971108@examples/all_features.rb:65>] => "Score Avg 62.0"},
+                :points=>{[:avg, #<Proc:0x007fcd11971090@examples/all_features.rb:69>]=>"Points Avg 2.0"},
+                :karma=>{[:avg, #<Proc:0x007fcd11971018@examples/all_features.rb:73>]=>"Karma Avg 10.0"}
+              },
+              {
+                :score=>{[:max, #<Proc:0x007fcd11970fc8@examples/all_features.rb:77>]=>"Score Max 62.0"},
+                :karma=>{[:max, #<Proc:0x007fcd11970f28@examples/all_features.rb:81>]=>"Karma Max10.0"},
+                :points=>{[:max, #<Proc:0x007fcd11970eb0@examples/all_features.rb:85>]=>"Points Max 2.0"}
+              },
+              {
+                :score=>{[:sum, #<Proc:0x007fcd11970e38@examples/all_features.rb:89>]=>"Score Sum 62.0"},
+                :karma=>{[:sum, #<Proc:0x007fcd11970dc0@examples/all_features.rb:93>]=>"Karma Avg 10.0"}
+              },
+              {
+                :points=>{#<Proc:0x007fcd11970d70@examples/all_features.rb:97>=>"Points custom"}
+              }
+             ],
+"Test"=>[{:score=>{[
+                    :avg, #<Proc:0x007fcd11971108@examples/all_features.rb:65>]=>"Score Avg 32.0"},
+                    :points=>{[:avg, #<Proc:0x007fcd11971090@examples/all_features.rb:69>]=>"Points Avg 2.0"},
+                    :karma=>{[:avg, #<Proc:0x007fcd11971018@examples/all_features.rb:73>]=>"Karma Avg 10.0"}
+                  },
+
+                  { :score=>{[:max, #<Proc:0x007fcd11970fc8@examples/all_features.rb:77>]=>"Score Max 32.0"},
+                    :karma=>{[:max, #<Proc:0x007fcd11970f28@examples/all_features.rb:81>]=>"Karma Max10.0"},
+                    :points=>{[:max, #<Proc:0x007fcd11970eb0@examples/all_features.rb:85>]=>"Points Max 2.0"}
+                    }, {:score=>{[:sum, #<Proc:0x007fcd11970e38@examples/all_features.rb:89>]=>"Score Sum 32.0"}, :karma=>{[:sum, #<Proc:0x007fcd11970dc0@examples/all_features.rb:93>]=>"Karma Avg 10.0"}}, {:points=>{#<Proc:0x007fcd11970d70@examples/all_features.rb:97>=>"Points custom"}}], "Quiz"=>[{:score=>{[:avg, #<Proc:0x007fcd11971108@examples/all_features.rb:65>]=>"Score Avg 75.0"}, :points=>{[:avg, #<Proc:0x007fcd11971090@examples/all_features.rb:69>]=>"Points Avg 2.0"}, :karma=>{[:avg, #<Proc:0x007fcd11971018@examples/all_features.rb:73>]=>"Karma Avg 7.0"}}, {:score=>{[:max, #<Proc:0x007fcd11970fc8@examples/all_features.rb:77>]=>"Score Max 75.0"}, :karma=>{[:max, #<Proc:0x007fcd11970f28@examples/all_features.rb:81>]=>"Karma Max7.0"}, :points=>{[:max, #<Proc:0x007fcd11970eb0@examples/all_features.rb:85>]=>"Points Max 2.0"}}, {:score=>{[:sum, #<Proc:0x007fcd11970e38@examples/all_features.rb:89>]=>"Score Sum 75.0"}, :karma=>{[:sum, #<Proc:0x007fcd11970dc0@examples/all_features.rb:93>]=>"Karma Avg 7.0"}}, {:points=>{#<Proc:0x007fcd11970d70@examples/all_features.rb:97>=>"Points custom"}}]}
+
+def calculate_subtotals!
+  raise 'Subtotals only work with grouped results sets' unless @grouped_data
+  @subtotal_calculations ||= {}
+  @subtotals.each_with_index do |subtotal_type, index|
+    @collection.each_pair_sub(@groupings.count) do |group_name, group_data, parents|
+      subtotal_type.each do |subtotal|
+        result = calculate(group_data, subtotal[0], subtotal[1])
+        path = parents + [group_name, index]
+        # build build nested hash
+        byebug
+        path.reduce(@subtotal_calculations) { |h, m| h[m] = {} } unless @subtotal_calculations.dig(path)
+        path.inject(@subtotal_calculations, :fetch)[subtotal[0]] = {subtotal[1] => result}
+      end
+    end
+  end
+end
+
+
+# The old calculate_subtotals
+def calculate_subtotals!
+  raise 'Subtotals only work with grouped results sets' unless @grouped_data
+
+  @subtotal_calculations = Hash.new { |h, k| h[k] = [] }
+  @subtotals.each_with_index do |subtotal, index|
+    @collection.each_pair_recursive do |group_name, group_data|
+      subtotal.each do |s|
+        result = calculate(group_data, s[0], s[1])
+        if @subtotal_calculations[group_name][index].nil?
+          @subtotal_calculations[group_name][index] = {}
+        end
+        byebug
+        @subtotal_calculations[group_name][index][s[0]] = {s[1] => result}
+      end
+    end
+  end
+end
+
+(byebug) @subtotal_calculations[group_name][index][s[0]]
+nil
+(byebug) @subtotal_calculations[group_name][index]
+{}
+(byebug) @subtotal_calculations[group_name]
+[{}]
+(byebug) @subtotal_calculations
+{"Homework"=>[{}]}
+
+[{:score=>{[:avg, #<Proc:0x007fa5c1028b40@examples/all_features.rb:65>]=>"Score Avg 98.0"}}]
+(byebug) val2
+[{:points=>{[:avg, #<Proc:0x007fa5c1028320@examples/all_features.rb:69>]=>"Points Avg 2.0"}}]
+
+(byebug) val1
+{:score=>{[:avg, #<Proc:0x007fa5c1028b40@examples/all_features.rb:65>]=>"Score Avg 98.0"}, :points=>{[:avg, #<Proc:0x007fa5c1028320@examples/all_features.rb:69>]=>"Points Avg 2.0"}}
+(byebug) val2
+[{:karma=>{[:avg, #<Proc:0x007fa5c1023fa0@examples/all_features.rb:73>]=>"Karma Avg 10.0"}}]
+
+
+Is there a termination fee for the 12 month contract?
+If there is a termination fee, then are we getting a discount over month to month?
+What happens if we exceed the limits of our plan?
+Do we have full control of our solution when we go through Backspace

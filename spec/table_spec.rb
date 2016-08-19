@@ -40,14 +40,14 @@ describe DataTable::Table do
 
     it "should do totaling" do
       data_table.column :power_level
-      data_table.total :power_level, :sum
+      data_table.total :power_level, :sum, 0
       data_table.calculate_totals!
       expect(data_table.total_calculations).to eq([{:power_level=>9226.0}])
     end
 
     it "should do custom formatting for the total" do
       data_table.column :power_level
-      data_table.total :power_level, :avg do |average|
+      data_table.total :power_level, :avg, 0 do |average|
         "#{average / 100.0}%"
       end
       data_table.calculate_totals!
@@ -66,10 +66,10 @@ describe DataTable::Table do
     it "should do sub-totaling" do
       data_table.group_by :world, level: 0
       data_table.column :power_level
-      data_table.subtotal :power_level, :sum
+      data_table.subtotal :power_level, :sum, 0
 
       data_table.prepare_data
-      expect(data_table.subtotal_calculations).to eq({"Star Wars"=>[{:power_level=>{:sum=>145.0}}], "Middle Earth"=>[{:power_level=>{:sum=>9081.0}}]})
+      expect(data_table.subtotal_calculations).to eq({["Star Wars"]=>[{:power_level=>{:sum=>145.0}}], ["Middle Earth"]=>[{:power_level=>{:sum=>9081.0}}]})
     end
 
     it "should render a custom header" do

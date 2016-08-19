@@ -61,8 +61,8 @@ module DataTable
     end
 
     def prepare_data
+      calculate_parent_subtotals if @groupings.count > 1
       group_data! if @grouped_data
-
       calculate_subtotals! if subtotals?
       calculate_totals! if totals?
     end
@@ -166,22 +166,22 @@ module DataTable
     #############
 
     # TODO: allow for group column only, block only and group column and block
-    def group_by(group_column, index = nil, &_blk)
-      if index.nil? && @groupings.count >= 1
-        raise "an index is required when using multiple groupings."
+    def group_by(group_column, level = {level: 0}, &_blk)
+      if level.nil? && @groupings.count >= 1
+        raise "a level designation is required when using multiple groupings."
       end
       @grouped_data = true
-      level = {group_column => (index.nil? ? 0 : index.values[0])}
-      @groupings << level
+      @groupings[level ? level[:level] : 0] = group_column
       @columns.reject! { |c| c.name == group_column }
     end
 
     def group_data!
-      if @groupings.count > 1
-        @collection = collection.group_by_recursive(@groupings)
-      else
-        @collection = collection.group_by { |row| row[@groupings[0].keys[0]] }
-      end
+      @groupings.compact!
+      @collection = if @groupings.count > 1
+                      collection.group_by_recursive(@groupings)
+                    else
+                      collection.group_by { |row| row[@groupings.first] }
+                    end
     end
 
     def render_grouped_data_table_body(collection)
@@ -211,30 +211,36 @@ module DataTable
     end
 
     def render_group(group_header, group_data)
-      # replace non-letters and numbers with '_'
       html = "<tbody class='#{group_header.to_s.downcase.gsub(/[^A-Za-z0-9]+/, '_')}'>"
       html << render_group_header(group_header, 0)
       if group_data.is_a? Array
         html << render_rows(group_data)
         html << render_subtotals(group_header, group_data) if subtotals?
       elsif group_data.is_a? Hash
-        html << render_group_recursive(group_data)
+        html << render_group_recursive(group_data, 1, group_header)
       end
+      #html << render_parent_subtotals([group_header]) if @groupings.count > 1
       html << "</tbody>"
     end
 
-    def render_group_recursive(collection, index = 1)
+    def render_group_recursive(collection, index = 1, group_parent = nil, ancestors = nil)
       html = ""
-      collection.each_pair do |group_header, group_data|
+      ancestors ||= []
+      collection.each_pair do |group_name, group_data|
+        ancestors << group_parent unless ancestors[0] == group_parent
+        ancestors << group_name unless ancestors.length == @groupings.length
         if group_data.is_a?(Hash)
-          html << render_group_header(group_header, index)
-          html << render_group_recursive(group_data, index + 1)
-        else
-          html << render_group_header(group_header, index)
+          html << render_group_header(group_name, index)
+          html << render_group_recursive(group_data, index + 1, nil, ancestors)
+        elsif group_data.is_a?(Array)
+          html << render_group_header(group_name, index)
           html << render_rows(group_data)
-          html << render_subtotals(group_header, group_data) if subtotals?
+          ancestors.pop
+          html << render_subtotals(group_name, group_data, ancestors) if subtotals?
         end
       end
+      html << render_parent_subtotals(ancestors) if @parent_subtotals
+      ancestors.pop
       html
     end
 
@@ -254,9 +260,26 @@ module DataTable
       html << "</tfoot>"
     end
 
-    def render_subtotals(group_header, _group_data = nil)
+    def render_parent_subtotals(group_array)
       html = ""
-      @subtotal_calculations[group_header].each_with_index do |group, index|
+      @parent_subtotals[group_array].each_with_index do |group, index|
+        html << "<tr class='parent_subtotal "
+        html << "index_#{index} #{group_array.join('_').gsub(/\s/, '_').downcase}'>"
+        @columns.each do |col|
+          value = group[col.name] ? group[col.name].values[0] : nil
+          html << col.render_cell(value)
+        end
+        html << "</tr>"
+      end
+      html
+    end
+
+    # ancestors should be an array
+    def render_subtotals(group_header, _group_data = nil, ancestors = nil)
+      html = ""
+      path = ancestors.nil? ? [] : ancestors.dup
+      path << group_header
+      @subtotal_calculations[path].each_with_index do |group, index|
         html << "<tr class='subtotal index_#{index}'>"
         @columns.each do |col|
           value = group[col.name] ? group[col.name].values[0] : nil
@@ -267,18 +290,18 @@ module DataTable
       html
     end
 
-    def subtotal(column_name, function = nil, index = {index: 0}, &b)
+    def subtotal(column_name, function = nil, index = 0, &block)
       raise "You must supply an index value" if @subtotals.count >= 1 && index.nil?
-      total_row @subtotals, column_name, function, index[:index], &b
+      total_row @subtotals, column_name, function, index, &block
     end
 
     def subtotals?
       !@subtotals.empty?
     end
 
-    def total(column_name, function = nil, index = {index: 0}, &block)
+    def total(column_name, function = nil, index = 0, &block)
       raise "You must supply an index value" if @totals.count >= 1 && index.nil?
-      total_row @totals, column_name, function, index[:index], &block
+      total_row @totals, column_name, function, index, &block
     end
 
     def totals?
@@ -288,61 +311,86 @@ module DataTable
     # TODO: Refactor to shorten method. Also revise tests.
     def calculate_totals!
       @total_calculations = []
-      @totals.compact.each do |total|
+      @totals.each_with_index do |row, index|
         if @collection.is_a?(Hash)
           collection = []
-          @collection.each_pair_recursive { |k, v| collection.concat(v) }
+          @collection.each_pair_recursive { |_k, v| collection.concat(v) }
         end
         collection = @collection if @collection.is_a? Array
-        result = {total.keys.first => calculate(collection, total.keys.first, total.values.first)}
-        @total_calculations << result
+        @total_calculations[index] = {} if @total_calculations[index].nil?
+        row.each do |item|
+          @total_calculations[index][item[0]] = calculate(collection, item[0], item[1])
+        end
       end
     end
 
     def calculate_subtotals!
-      # ensure that we are dealing with a grouped results set.
       raise 'Subtotals only work with grouped results sets' unless @grouped_data
-
-      @subtotal_calculations = Hash.new { |h, k| h[k] = [] }
-      @collection.each_pair_recursive do |group_name, group_data|
-        @subtotals.compact.each_with_index do |subtotal, index|
-          result = calculate(group_data, subtotal.first[0], subtotal.first[1])
-          subtotal_row = {subtotal.first[0] => {subtotal.first[1] => result}}
-          @subtotal_calculations[group_name] << subtotal_row
+      @subtotal_calculations ||= Hash.new { |h, k| h[k] = [] }
+      @subtotals.each_with_index do |subtotal_type, index|
+        subtotal_type.each do |subtotal|
+          @collection.each_pair_with_parents(@groupings.count) do |group_name, group_data, parents|
+            path = parents + [group_name]
+            result = calculate(group_data, subtotal[0], subtotal[1], path)
+            @subtotal_calculations[path][index] ||= {}
+            @subtotal_calculations[path][index][subtotal[0]] = {subtotal[1] => result}
+          end
         end
       end
     end
 
+    def calculate_parent_subtotals
+      @parent_subtotals = Hash.new { |h, k| h[k] = [] }
+      # Iterate over all the parent groups
+      parent_groups = @groupings.slice(0, @groupings.count - 1).compact
+      parent_groups.count.times do
+        # Group by each parent on the fly
+        @subtotals.each_with_index do |subtotal, index|
+          @collection.group_by_recursive(parent_groups).each_pair_with_parents do |group_name, data, parents|
+            subtotal.each do |s|
+              path = parents + [group_name]
+              result = calculate(data, s[0], s[1], path)
+              @parent_subtotals[path][index] ||= {} if @parent_subtotals[path][index].nil?
+              @parent_subtotals[path][index][s[0]] = {s[1] => result}
+            end
+          end
+        end
+        parent_groups.pop
+      end
+    end
+
     # TODO: Write test for this
-    def calculate(data, column_name, function)
+    def calculate(data, column_name, function, path = nil)
       column = @columns.select { |column| column.name == column_name }
       if function.is_a?(Proc)
-        calculate_with_proc(function, data, column)
+        calculate_with_proc(function, data, column, path)
       elsif function.is_a?(Array) && function[1].is_a?(Proc)
-        calculate_array_and_proc(function, data, column_name)
+        calculate_array_and_proc(function, data, column_name, path)
       elsif function.is_a?(Array)
-        calculate_many(function, data, column_name)
+        calculate_many(function, data, column_name, path)
       else
         send("calculate_#{function}", data, column_name)
       end
     end
 
-    def calculate_with_proc(function, data, column = nil)
+    def calculate_with_proc(function, data, column = nil, path = nil)
       case function.arity
       when 1 then function.call(data)
       when 2 then function.call(data, column.first)
+      when 3 then function.call(data, column.first, path.last)
       end
     end
 
-    def calculate_array_and_proc(function, data, column = nil)
+    def calculate_array_and_proc(function, data, column = nil, path = nil)
       result = send("calculate_#{function[0]}", data, column)
       case function[1].arity
       when 1 then function[1].call(result)
       when 2 then function[1].call(result, column.first)
+      when 3 then function[1].call(result, column.first, path.last)
       end
     end
 
-    def calculate_many(function, data, column_name)
+    def calculate_many(function, data, column_name, path = nil)
       function.each do |func|
         if func.is_a? Array
           send("calculate_#{func[0]}", data, column_name)
@@ -381,7 +429,8 @@ module DataTable
     def total_row(collection, column_name, function = nil, index = nil, &block)
       function_or_block = function || block
       f = function && block_given? ? [function, block] : function_or_block
-      collection[index] = {column_name => f}
+      collection[index] = {} if collection[index].nil?
+      collection[index][column_name] = f
     end
   end
 end

@@ -70,15 +70,15 @@ DataTable.render(@collection) do |t|
   t.column :column_3, "Title 3"
 
   # Use a default function and no block.
-  t.total :column_1, :sum, index: 0
+  t.total :column_1, 0, :sum
 
   # Pass only a block and an index
-  t.total :column_2, nil, index: 1, do |values|
+  t.total :column_2, 1, do |values|
     # custom methods here
   end
 
   # Pass a default function and a block
-  t.total(:column_3, :sum, index: 2) do |aggregate_total|
+  t.total(:column_3, 2, :sum) do |aggregate_total|
     format_money(aggregate_total)
   end
 
@@ -103,9 +103,8 @@ DataTable.render(@collection) do |t|
 
   t.group_by :column_1
 
-  t.subtotal :column_2, :sum, index: 0
-  t.subtotal :column_3, :max, index: 1
-
+  t.subtotal :column_2, 0, :sum
+  t.subtotal :column_3, 1, :max
 end
 ```
 It is possible to use `group_by` on its own without subtotaling.
@@ -113,8 +112,8 @@ It is possible to use `group_by` on its own without subtotaling.
 ### Multiple Groups and Sub Totals
 
 It is also possible to combine multiple `group_by` with multiple `subtotal`. In this
-scenario you must specify a `level` for each group. When only specifying a single
-group you may omit `level`.
+scenario you must specify a `level` for each group by passing an integer value.
+When only specifying a group you may omit `level`.
 
 ```ruby
 DataTable.render(@collection) do |t|
@@ -122,12 +121,11 @@ DataTable.render(@collection) do |t|
   t.column :column_2, "Title 2"
   t.column :column_3, "Title 3"
 
-  t.group_by :column_1, level: 0
-  t.group_by :column_2, level: 1
+  t.group_by :column_1, 0
+  t.group_by :column_2, 1
 
-  t.subtotal :column_3, :sum
-  t.subtotal :column_3, :sum
-
+  t.subtotal :column_3, 0, :sum
+  t.subtotal :column_3, 0, :sum
 end
 ```
 
