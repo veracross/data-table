@@ -360,7 +360,7 @@ module DataTable
 
     # TODO: Write test for this
     def calculate(data, column_name, function, path = nil)
-      column = @columns.select { |column| column.name == column_name }
+      column = @columns.select { |col| col.name == column_name }
       if function.is_a?(Proc)
         calculate_with_proc(function, data, column, path)
       elsif function.is_a?(Array) && function[1].is_a?(Proc)

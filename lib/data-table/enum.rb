@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # Custom Enumerable methods
 module Enumerable
   # Use a set of provided groupings to transform a flat array of
@@ -22,7 +23,7 @@ module Enumerable
   def each_pair_recursive
     each_pair do |k, v|
       if v.is_a?(Hash)
-        v.each_pair_recursive { |k, v| yield k, v }
+        v.each_pair_recursive { |i, j| yield i, j }
       else
         yield(k, v)
       end
@@ -45,7 +46,7 @@ module Enumerable
     each_pair do |k, v|
       levels << k
       if v.is_a? Hash
-        v.each_pair_with_parents(limit, levels) { |k, v, levels| yield(k, v, levels) }
+        v.each_pair_with_parents(limit, levels) { |i, j, next_levels| yield(i, j, next_levels) }
       elsif v.is_a? Array
         levels.pop
         yield(k, v, levels)
