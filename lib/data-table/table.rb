@@ -219,7 +219,6 @@ module DataTable
       elsif group_data.is_a? Hash
         html << render_group_recursive(group_data, 1, group_header)
       end
-      #html << render_parent_subtotals([group_header]) if @groupings.count > 1
       html << "</tbody>"
     end
 
