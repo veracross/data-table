@@ -48,15 +48,15 @@ module DataTable
       @display_header = true
       @alternate_rows = true
       @alternate_cols = false
-      @subtotal_title = "Subtotal:"
-      @total_title = "Total:"
+      @subtotal_title = 'Subtotal:'
+      @total_title = 'Total:'
       @repeat_headers_for_groups = false
       @custom_headers = []
       @row_attributes = nil
     end
 
     # Define a new column for the table
-    def column(id, title = "", opts = {}, &b)
+    def column(id, title = '', opts = {}, &b)
       @columns << DataTable::Column.new(id, title, opts, &b)
     end
 
@@ -84,19 +84,19 @@ module DataTable
       else
         html << "<tr><td class='empty_data_table' colspan='#{@columns.size}'>#{@empty_text}</td></tr>"
       end
-      html << "</table>"
+      html << '</table>'
     end
 
     def render_data_table_header
-      html = "<thead>"
+      html = '<thead>'
 
       html << render_custom_table_header unless @custom_headers.empty?
 
-      html << "<tr>"
+      html << '<tr>'
       @columns.each do |col|
         html << col.render_column_header
       end
-      html << "</tr></thead>"
+      html << '</tr></thead>'
     end
 
     def render_custom_table_header
@@ -104,7 +104,7 @@ module DataTable
       @custom_headers.each do |h|
         html << "<th class=\"#{h[:css]}\" colspan=\"#{h[:colspan]}\">#{h[:text]}</th>"
       end
-      html << "</tr>"
+      html << '</tr>'
     end
 
     def render_data_table_body(collection)
@@ -116,9 +116,9 @@ module DataTable
     end
 
     def render_rows(collection)
-      html = ""
+      html = ''
       collection.each_with_index do |row, row_index|
-        css_class = @alternate_rows && row_index % 2 == 1 ? 'alt ' : ''
+        css_class = @alternate_rows && row_index.odd? ? 'alt ' : ''
         if @row_style && style = @row_style.call(row, row_index)
           css_class << style
         end
@@ -129,19 +129,23 @@ module DataTable
       html
     end
 
-    def render_row(row, row_index, css_class='', row_attributes={})
-      if row_attributes.nil?
-        attributes = ''
-      else
-        attributes = row_attributes.map { |attr, val| "#{attr}='#{val}'" }.join " "
-      end
+    def render_row(row, row_index, css_class = '', row_attributes = {})
+      attributes = if row_attributes.nil?
+                     ''
+                   else
+                     row_attributes.map { |attr, val| "#{attr}='#{val}'" }.join ' '
+                   end
 
       html = "<tr class='row_#{row_index} #{css_class}' #{attributes}>"
       @columns.each_with_index do |col, col_index|
-        cell = row[col.name] rescue nil
+        cell = begin
+                 row[col.name]
+               rescue
+                 nil
+               end
         html << col.render_cell(cell, row, row_index, col_index)
       end
-      html << "</tr>"
+      html << '</tr>'
     end
 
     # define a custom block to be used to determine the css class for a row.
@@ -168,7 +172,7 @@ module DataTable
     # TODO: allow for group column only, block only and group column and block
     def group_by(group_column, level = {level: 0}, &_blk)
       if level.nil? && @groupings.count >= 1
-        raise "a level designation is required when using multiple groupings."
+        raise 'a level designation is required when using multiple groupings.'
       end
       @grouped_data = true
       @groupings[level ? level[:level] : 0] = group_column
@@ -185,7 +189,7 @@ module DataTable
     end
 
     def render_grouped_data_table_body(collection)
-      html = ""
+      html = ''
       collection.keys.each do |group_name|
         html << render_group(group_name, collection[group_name])
       end
@@ -193,11 +197,11 @@ module DataTable
     end
 
     def render_group_header(group_header, index = nil)
-      css_classes = ["group_header"]
+      css_classes = ['group_header']
       css_classes << ["level_#{index}"] unless index.nil?
       html =  "<tr class='#{css_classes.join(' ')}'>"
       html << "<th colspan='#{@columns.size}'>#{group_header}</th>"
-      html << "</tr>"
+      html << '</tr>'
       repeat_headers(html) if @repeat_headers_for_groups
       html
     end
@@ -207,7 +211,7 @@ module DataTable
       @columns.each_with_index do |col, _i|
         html << col.render_column_header
       end
-      html << "</tr>"
+      html << '</tr>'
     end
 
     def render_group(group_header, group_data)
@@ -219,11 +223,11 @@ module DataTable
       elsif group_data.is_a? Hash
         html << render_group_recursive(group_data, 1, group_header)
       end
-      html << "</tbody>"
+      html << '</tbody>'
     end
 
     def render_group_recursive(collection, index = 1, group_parent = nil, ancestors = nil)
-      html = ""
+      html = ''
       ancestors ||= []
       collection.each_pair do |group_name, group_data|
         ancestors << group_parent unless ancestors[0] == group_parent
@@ -247,20 +251,20 @@ module DataTable
     # TOTALS AND SUBTOTALS
     #############
     def render_totals
-      html = "<tfoot>"
+      html = '<tfoot>'
       @total_calculations.each_with_index do |totals_row, index|
         html << "<tr class='total index_#{index}'>"
         @columns.each do |col|
           value = totals_row[col.name] ||= nil
           html << col.render_cell(value)
         end
-        html << "</tr>"
+        html << '</tr>'
       end
-      html << "</tfoot>"
+      html << '</tfoot>'
     end
 
     def render_parent_subtotals(group_array)
-      html = ""
+      html = ''
       @parent_subtotals[group_array].each_with_index do |group, index|
         html << "<tr class='parent_subtotal "
         html << "index_#{index} #{group_array.join('_').gsub(/\s/, '_').downcase}'>"
@@ -268,14 +272,14 @@ module DataTable
           value = group[col.name] ? group[col.name].values[0] : nil
           html << col.render_cell(value)
         end
-        html << "</tr>"
+        html << '</tr>'
       end
       html
     end
 
     # ancestors should be an array
     def render_subtotals(group_header, _group_data = nil, ancestors = nil)
-      html = ""
+      html = ''
       path = ancestors.nil? ? [] : ancestors.dup
       path << group_header
       @subtotal_calculations[path].each_with_index do |group, index|
@@ -284,13 +288,13 @@ module DataTable
           value = group[col.name] ? group[col.name].values[0] : nil
           html << col.render_cell(value)
         end
-        html << "</tr>"
+        html << '</tr>'
       end
       html
     end
 
     def subtotal(column_name, function = nil, index = 0, &block)
-      raise "You must supply an index value" if @subtotals.count >= 1 && index.nil?
+      raise 'You must supply an index value' if @subtotals.count >= 1 && index.nil?
       total_row @subtotals, column_name, function, index, &block
     end
 
@@ -299,7 +303,7 @@ module DataTable
     end
 
     def total(column_name, function = nil, index = 0, &block)
-      raise "You must supply an index value" if @totals.count >= 1 && index.nil?
+      raise 'You must supply an index value' if @totals.count >= 1 && index.nil?
       total_row @totals, column_name, function, index, &block
     end
 
@@ -389,7 +393,7 @@ module DataTable
       end
     end
 
-    def calculate_many(function, data, column_name, path = nil)
+    def calculate_many(function, data, column_name, _path = nil)
       function.each do |func|
         if func.is_a? Array
           send("calculate_#{func[0]}", data, column_name)

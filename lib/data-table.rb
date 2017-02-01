@@ -1,7 +1,8 @@
-require "data-table/version"
-require "data-table/table"
-require "data-table/column"
-require "data-table/enum"
+# frozen_string_literal: true
+require 'data-table/version'
+require 'data-table/table'
+require 'data-table/column'
+require 'data-table/enum'
 
 module DataTable
   def self.render(collection, &_blk)
