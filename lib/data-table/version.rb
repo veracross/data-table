@@ -1,3 +1,3 @@
 module DataTable
-  VERSION = "1.1beta"
+  VERSION = '2.0'.freeze
 end

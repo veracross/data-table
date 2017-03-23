@@ -56,12 +56,12 @@ You don't need to pass in all of the block parameters; just the ones up to the o
 
 ### Totals
 
-It is possible to setup totals & subtotals.   Total columns take the name of the column that should be totaled.
+It is possible to setup totals & subtotals. Total columns take the name of the column that should be totaled. It is also possible to specify multiple total and subtotal columns.
 
-They also take a default aggregate function name and/or a block
-If only a default function is given, then it is used to calculate the total
-If only a block is given then only it is used to calculated the total
-If both a block and a function are given then the default aggregate function is called first then its result is passed into the block for further processing.
+They also take a default aggregate function name and/or a block.
+* If only a default function is given, then it is used to calculate the total
+* If only a block is given then only it is used to calculated the total
+* If both a block and a function are given then the default aggregate function is called first then its result is passed into the block for further processing.
 
 ```ruby
 DataTable.render(@collection) do |t|
@@ -69,12 +69,16 @@ DataTable.render(@collection) do |t|
   t.column :column_2, "Title 2"
   t.column :column_3, "Title 3"
 
-  t.total :column_1, :sum
-  t.total :column_2 do |values|
+  # Use a default function and no block.
+  t.total :column_1, 0, :sum
 
+  # Pass only a block and an index
+  t.total :column_2, 1, do |values|
+    # custom methods here
   end
 
-  t.total(:column_3, :sum) do |aggregate_total|
+  # Pass a default function and a block
+  t.total(:column_3, 2, :sum) do |aggregate_total|
     format_money(aggregate_total)
   end
 
@@ -86,7 +90,30 @@ Possible default functions: `:sum`, `:avg`, `:min`, `:max`
 
 ### Sub Totals
 
-SubTotals work in a similar way to Totals.  The main difference is that you need to call group by to specificy the different subtotal groupings
+SubTotals work in a similar way to Totals.  The main difference is that you need to call group_by to specify the different subtotal groupings.
+
+When configuring more than one subtotal column the index parameter is required
+
+```ruby
+DataTable.render(@collection) do |t|
+  t.column :column_1, "Title"
+  t.column :column_2, "Title 2"
+  t.column :column_3, "Title 3"
+  t.column :column_4, "Title 4"
+
+  t.group_by :column_1
+
+  t.subtotal :column_2, 0, :sum
+  t.subtotal :column_3, 1, :max
+end
+```
+It is possible to use `group_by` on its own without subtotaling.
+
+### Multiple Groups and Sub Totals
+
+It is also possible to combine multiple `group_by` with multiple `subtotal`. In this
+scenario you must specify a `level` for each group by passing an integer value.
+When only specifying a group you may omit `level`.
 
 ```ruby
 DataTable.render(@collection) do |t|
@@ -94,14 +121,13 @@ DataTable.render(@collection) do |t|
   t.column :column_2, "Title 2"
   t.column :column_3, "Title 3"
 
-  t.group_by :column_1
+  t.group_by :column_1, 0
+  t.group_by :column_2, 1
 
-  t.subtotal :column_2, :sum
-
+  t.subtotal :column_3, 0, :sum
+  t.subtotal :column_3, 0, :sum
 end
 ```
-
-It is possible to use `group_by` on its own without subtotaling.
 
 You can also combine subtotals & totals in the same table.
 
