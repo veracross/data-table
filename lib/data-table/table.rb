@@ -102,7 +102,7 @@ module DataTable
     def render_custom_table_header
       html = "<tr class='custom-header'>"
       @custom_headers.each do |h|
-        html << "<th class=\"#{h[:css]}\" colspan=\"#{h[:colspan]}\">#{h[:text]}</th>"
+        html << "<th class=\"#{h[:css]}\" colspan=\"#{h[:colspan]}\" style=\"#{h[:style]}\">#{h[:text]}</th>"
       end
       html << '</tr>'
     end
