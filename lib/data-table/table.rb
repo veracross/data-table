@@ -253,6 +253,8 @@ module DataTable
     def render_totals
       html = '<tfoot>'
       @total_calculations.each_with_index do |totals_row, index|
+        next if totals_row.nil?
+        
         html << "<tr class='total index_#{index}'>"
         @columns.each do |col|
           value = totals_row[col.name] ||= nil
@@ -315,6 +317,8 @@ module DataTable
     def calculate_totals!
       @total_calculations = []
       @totals.each_with_index do |row, index|
+        next if row.nil?
+
         if @collection.is_a?(Hash)
           collection = []
           @collection.each_pair_recursive { |_k, v| collection.concat(v) }
