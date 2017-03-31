@@ -32,9 +32,16 @@ module DataTable
 
       .data_table .group_header th {text-align: left;}
 
-      .data_table .subtotal td {border-top: 1px solid #000;}
+      .data_table .subtotal.index_0 td,
+      .data_table .parent_subtotal.index_0 td
+      {
+        border-top: 1px solid #000;
+      }
 
-      .data_table tfoot td {border-top: 1px solid #000;}
+      .data_table tfoot .total.index_0 td
+      {
+        border-top: 1px solid #000;
+      }
 
       .empty_data_table {text-align: center; background-color: #ffc;}
 
