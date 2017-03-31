@@ -77,7 +77,7 @@ describe DataTable::Table do
         th 'Two Columns', :colspan => 2
         th 'One Column', :colspan => 1
       end
-      expect(data_table.render_custom_table_header).to eq(%{<tr class='custom-header'><th class="" colspan="2">Two Columns</th><th class="" colspan="1">One Column</th></tr>})
+      expect(data_table.render_custom_table_header).to eq(%{<tr class='custom-header'><th class="" colspan="2" style="">Two Columns</th><th class="" colspan="1" style="">One Column</th></tr>})
     end
   end
 
