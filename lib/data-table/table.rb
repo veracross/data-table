@@ -25,7 +25,7 @@ module DataTable
 
     attr_accessor :id, :title, :css_class, :empty_text,
                   :alternate_rows, :alternate_cols, :display_header, :hide_if_empty,
-                  :repeat_headers_for_groups, :custom_headers
+                  :repeat_headers_for_groups, :custom_headers, :totals_in_tfoot
 
     def initialize(collection)
       @collection = collection
@@ -53,6 +53,7 @@ module DataTable
       @repeat_headers_for_groups = false
       @custom_headers = []
       @row_attributes = nil
+      @totals_in_tfoot = true
     end
 
     # Define a new column for the table
@@ -251,7 +252,7 @@ module DataTable
     # TOTALS AND SUBTOTALS
     #############
     def render_totals
-      html = '<tfoot>'
+      html = @totals_in_tfoot ? '<tfoot>' : "<tr class='tfoot'>"
       @total_calculations.each_with_index do |totals_row, index|
         next if totals_row.nil?
         
@@ -262,7 +263,7 @@ module DataTable
         end
         html << '</tr>'
       end
-      html << '</tfoot>'
+      html << @totals_in_tfoot ? '</tfoot>' : '</tr>'
     end
 
     def render_parent_subtotals(group_array)
