@@ -52,6 +52,7 @@ module DataTable
       @total_title = 'Total:'
       @repeat_headers_for_groups = false
       @custom_headers = []
+      @custom_footers = []
       @row_attributes = nil
     end
 
@@ -80,7 +81,7 @@ module DataTable
       html << render_data_table_header if @display_header
       if @collection.any?
         html << render_data_table_body(@collection)
-        html << render_totals if totals?
+        html << render_table_footer if footer?
       else
         html << "<tr><td class='empty_data_table' colspan='#{@columns.size}'>#{@empty_text}</td></tr>"
       end
@@ -148,6 +149,24 @@ module DataTable
       html << '</tr>'
     end
 
+    def render_table_footer
+      html = '<tfoot>'
+      html += totals? ? render_totals : render_custom_footer
+      html + '</tfoot>'
+    end
+
+    def render_custom_footer
+      html = "<tr class='custom-footer'>"
+      @custom_footers.each do |h|
+        html << "<td class=\"#{h[:css]}\" colspan=\"#{h[:colspan]}\" style=\"#{h[:style]}\">#{h[:text]}</td>"
+      end
+      html << '</tr>'
+    end
+
+    def footer?
+      totals? || !@custom_footers.empty?
+    end
+
     # define a custom block to be used to determine the css class for a row.
     def row_style(&b)
       @row_style = b
@@ -157,8 +176,16 @@ module DataTable
       instance_eval(&blk)
     end
 
+    def custom_footer(&blk)
+      instance_eval(&blk)
+    end
+
     def th(header_text, options)
       @custom_headers << options.merge(text: header_text)
+    end
+
+    def tf(footer_text, options = {})
+      @custom_footers << options.merge(text: footer_text)
     end
 
     def row_attributes(&b)
@@ -251,10 +278,10 @@ module DataTable
     # TOTALS AND SUBTOTALS
     #############
     def render_totals
-      html = '<tfoot>'
+      html = ''
       @total_calculations.each_with_index do |totals_row, index|
         next if totals_row.nil?
-        
+
         html << "<tr class='total index_#{index}'>"
         @columns.each do |col|
           value = totals_row[col.name] ||= nil
@@ -262,7 +289,7 @@ module DataTable
         end
         html << '</tr>'
       end
-      html << '</tfoot>'
+      html
     end
 
     def render_parent_subtotals(group_array)
