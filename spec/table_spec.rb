@@ -79,6 +79,33 @@ describe DataTable::Table do
       end
       expect(data_table.render_custom_table_header).to eq(%{<tr class='custom-header'><th class="" colspan="2" style="">Two Columns</th><th class="" colspan="1" style="">One Column</th></tr>})
     end
+
+    it "should render a custom footer" do
+      data_table.custom_footer do
+        tf 'Two Columns', colspan: 2
+        tf 'One Column', colspan: 1
+      end
+      expect(data_table.render_custom_footer).to eq(%{<tr class='custom-footer'><td class="" colspan="2" style="">Two Columns</td><td class="" colspan="1" style="">One Column</td></tr>})
+    end
+
+    it "should render a custom footer if the table does not do totaling" do
+      data_table.custom_footer do
+        tf 'Two Columns', colspan: 2
+        tf 'One Column', colspan: 1
+      end
+      expect(data_table.render_table_footer).to eq("<tfoot>#{data_table.render_custom_footer}</tfoot>")
+    end
+
+    it "should render totals if table does totaling and a custom footer is defined" do
+      data_table.custom_footer do
+        tf 'Two Columns', colspan: 2
+        tf 'One Column', colspan: 1
+      end
+      data_table.column :power_level
+      data_table.total :power_level, :sum, 0
+      data_table.calculate_totals!
+      expect(data_table.render_table_footer).to eq("<tfoot>#{data_table.render_totals}</tfoot>")
+    end
   end
 
 	context "with an empty collection" do
