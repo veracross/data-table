@@ -16,9 +16,11 @@ module DataTable
       @display = true
       @index = 0
       @renderer = renderer
+      @rowspan = @attributes[:rowspan] || 1
     end
 
     def render_cell(cell_data, row = nil, row_index = 0, col_index = 0)
+      return '' if skip_cell_render?(row_index)
       @data_type ||= type(cell_data)
 
       html = []
@@ -37,6 +39,10 @@ module DataTable
       html << '</td>'
       # Doing this here b/c you can't change @css_class if this is done before the renderer is called
       "<td class='#{css_class_names}' #{custom_attributes}>" + html.join
+    end
+
+    def skip_cell_render?(row_num)
+      row_num % @rowspan > 0
     end
 
     def render_column_header

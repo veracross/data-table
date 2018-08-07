@@ -79,6 +79,12 @@ describe DataTable::Table do
       end
       expect(data_table.render_custom_table_header).to eq(%{<tr class='custom-header'><th class="" colspan="2" style="">Two Columns</th><th class="" colspan="1" style="">One Column</th></tr>})
     end
+    it "should do rowspan" do
+      data_table.column :world, 'World', attributes: {rowspan: 2}
+      data_table.column :name, 'Name'
+
+      expect(data_table.render).to eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='world ' rowspan='2'>World</th><th class='name ' >Name</th></tr></thead><tbody><tr class='row_0 ' ><td class='world text' rowspan='2'>Star Wars</td><td class='name text' >Luke Skywalker</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td></tr><tr class='row_2 ' ><td class='world text' rowspan='2'>Middle Earth</td><td class='name text' >Mithrander</td></tr><tr class='row_3 alt ' ><td class='name text' >Aragorn</td></tr></tbody></table>})
+    end
   end
 
 	context "with an empty collection" do
