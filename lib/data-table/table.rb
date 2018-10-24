@@ -285,6 +285,8 @@ module DataTable
       path = ancestors.nil? ? [] : ancestors.dup
       path << group_header
       @subtotal_calculations[path].each_with_index do |group, index|
+        next if group.empty?
+
         html << "<tr class='subtotal index_#{index}'>"
         @columns.each do |col|
           value = group[col.name] ? group[col.name].values[0] : nil

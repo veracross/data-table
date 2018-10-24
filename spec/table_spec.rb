@@ -85,6 +85,35 @@ describe DataTable::Table do
       })
     end
 
+    it "should not render empty sub-total aggregate rows" do
+      data_table.group_by :world, level: 0
+      data_table.column :power_level
+      data_table.subtotal :power_level, nil, 1 do |_records, _column, path|
+        path
+      end
+
+      data_table.prepare_data
+      subtotal_calculations = data_table.subtotal_calculations
+
+      # this is convoluted because it's hard to assert a nested structure that includes procs
+      # [
+      #   ["Middle Earth"] => [{}, {:power_level=>{#<Proc:0x03dbead8@table_spec.rb:78>=>"Middle Earth"}}],
+      #   ["Star Wars"] => [{}, {:power_level=>{#<Proc:0x03dbead8@table_spec.rb:78>=>"Star Wars"}}]
+      # ]
+      expect(subtotal_calculations.keys).to eq([["Star Wars"], ["Middle Earth"]])
+      expect(subtotal_calculations.values.flatten.map(&:keys)).to eq([[], [:power_level], [], [:power_level]])
+      subtotal_calculations.values.flatten.map(&:values).flatten.map(&:keys).each do |k|
+        expect(k).to be_a(Array)
+        expect(k.length).to eq(1)
+        expect(k[0]).to be_a(Proc)
+      end
+      expect(subtotal_calculations.values.flatten.map(&:values).flatten.map(&:values)).to eq([["Star Wars"], ["Middle Earth"]])
+
+      # note how the rows are index_1, and there is no index_0 row
+      expect(data_table.render).to \
+      eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='power_level ' ></th></tr></thead><tbody class='star_wars'><tr class='group_header level_0'><th colspan='1'>Star Wars</th></tr><tr class='row_0 ' ><td class='power_level numeric' >50</td></tr><tr class='row_1 alt ' ><td class='power_level numeric' >95</td></tr><tr class='subtotal index_1'><td class='power_level numeric' >Star Wars</td></tr></tbody><tbody class='middle_earth'><tr class='group_header level_0'><th colspan='1'>Middle Earth</th></tr><tr class='row_0 ' ><td class='power_level numeric' >9001</td></tr><tr class='row_1 alt ' ><td class='power_level numeric' >80</td></tr><tr class='subtotal index_1'><td class='power_level numeric' >Middle Earth</td></tr></tbody></table>})
+    end
+
     it "should render a custom header" do
       data_table.custom_header do
         th 'Two Columns', :colspan => 2
