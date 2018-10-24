@@ -72,6 +72,19 @@ describe DataTable::Table do
       expect(data_table.subtotal_calculations).to eq({["Star Wars"]=>[{:power_level=>{:sum=>145.0}}], ["Middle Earth"]=>[{:power_level=>{:sum=>9081.0}}]})
     end
 
+    it "should do sub-totaling starting with indexes > 0" do
+      data_table.group_by :world, level: 0
+      data_table.column :power_level
+      data_table.subtotal :power_level, :sum, 1
+
+      data_table.prepare_data
+
+      expect(data_table.subtotal_calculations).to eq({
+        ["Star Wars"] => [{}, {:power_level => {:sum => 145.0}}],
+        ["Middle Earth"] => [{}, {:power_level => {:sum => 9081.0}}]
+      })
+    end
+
     it "should render a custom header" do
       data_table.custom_header do
         th 'Two Columns', :colspan => 2

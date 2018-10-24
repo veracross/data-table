@@ -339,7 +339,9 @@ module DataTable
           @collection.each_pair_with_parents(@groupings.count) do |group_name, group_data, parents|
             path = parents + [group_name]
             result = calculate(group_data, subtotal[0], subtotal[1], path)
-            @subtotal_calculations[path][index] ||= {}
+            (0..index).each do |index|
+              @subtotal_calculations[path][index] ||= {}
+            end
             @subtotal_calculations[path][index][subtotal[0]] = {subtotal[1] => result}
           end
         end
@@ -436,7 +438,9 @@ module DataTable
     def total_row(collection, column_name, function = nil, index = nil, &block)
       function_or_block = function || block
       f = function && block_given? ? [function, block] : function_or_block
-      collection[index] = {} if collection[index].nil?
+      (0..index).each do |index|
+        collection[index] = {} if collection[index].nil?
+      end
       collection[index][column_name] = f
     end
   end
