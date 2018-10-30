@@ -38,7 +38,7 @@ module DataTable
         border-top: 1px solid #000;
       }
 
-      .data_table tfoot .total.index_0 td
+      .data_table tfoot .total:last-child td
       {
         border-top: 1px solid #000;
       }
