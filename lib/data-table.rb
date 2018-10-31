@@ -32,8 +32,8 @@ module DataTable
 
       .data_table .group_header th {text-align: left;}
 
-      .data_table .subtotal.index_0 td,
-      .data_table .parent_subtotal.index_0 td
+      .data_table .subtotal.first td,
+      .data_table .parent_subtotal.first td
       {
         border-top: 1px solid #000;
       }
