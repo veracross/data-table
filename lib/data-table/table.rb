@@ -284,15 +284,20 @@ module DataTable
       html = ''
       path = ancestors.nil? ? [] : ancestors.dup
       path << group_header
+
+      is_first_subtotal = true
+
       @subtotal_calculations[path].each_with_index do |group, index|
         next if group.empty?
-
-        html << "<tr class='subtotal index_#{index}'>"
+        
+        html << "<tr class='subtotal index_#{index} #{'first' if is_first_subtotal}'>"
         @columns.each do |col|
           value = group[col.name] ? group[col.name].values[0] : nil
           html << col.render_cell(value)
         end
         html << '</tr>'
+
+        is_first_subtotal = false
       end
       html
     end
