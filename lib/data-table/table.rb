@@ -268,6 +268,8 @@ module DataTable
     def render_parent_subtotals(group_array)
       html = ''
       @parent_subtotals[group_array].each_with_index do |group, index|
+        next if group.nil?
+
         html << "<tr class='parent_subtotal "
         html << "index_#{index} #{group_array.join('_').gsub(/\s/, '_').downcase}'>"
         @columns.each do |col|
