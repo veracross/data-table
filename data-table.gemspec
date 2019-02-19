@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.licenses    = ['Nonstandard']
   s.authors     = ['Steve Erickson', 'Jeff Fraser']
   s.email       = ['sixfeetover@gmail.com']
-  s.homepage    = 'https://github.com/sixfeetover/data-table'
+  s.homepage    = 'https://github.com/veracross/data-table'
   s.summary     = %(Turn arrays of hashes or models in to an HTML table.)
   s.description = %(data-table is a simple gem that provides a DSL for
                     turning an array of hashes or ActiveRecord objects into an
