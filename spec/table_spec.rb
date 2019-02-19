@@ -139,4 +139,136 @@ describe DataTable::Table do
       eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr></tr></thead><tr><td class='empty_data_table' colspan='0'>#{text}</td></tr></table>})
     end
   end
+
+  context 'with a more complicated setup' do
+    it 'renders okay' do
+      raw_results = [
+        { 'class' => 'Basketball', 'grade_level' => '9', 'points' => 50 },
+        { 'class' => 'Basketball', 'grade_level' => '9', 'points' => 51 },
+        { 'class' => 'Basketball', 'grade_level' => '10', 'points' => 52 },
+        { 'class' => 'Basketball', 'grade_level' => '10', 'points' => 53 },
+        { 'class' => 'Basketball', 'grade_level' => '10', 'points' => 54 },
+        { 'class' => 'Basketball', 'grade_level' => '12', 'points' => 55 }
+      ]
+
+      fields = [{
+        field_name: 'class',
+        display_description: 'Class',
+        column_width: 1.23,
+        data_type: 2
+      }, {
+        field_name: 'grade_level',
+        display_description: 'Grade Level',
+        column_width: 2.34,
+        data_type: 2
+      }, {
+        field_name: 'points',
+        display_description: 'Points',
+        column_width: 3.45,
+        data_type: 4
+      }]
+
+      column_groups = {}
+
+      subtotal_headers = [
+        { field_name: 'class' },
+        { field_name: 'grade_level' }
+      ]
+
+      subtotal_aggregates = {
+        sum: [],
+        avg: [{
+          field_name: 'points',
+          data_type: 4
+        }],
+        min: [],
+        max: []
+      }
+
+      total_aggregates = {
+        sum: [],
+        avg: [],
+        min: [],
+        max: []
+      }
+
+      has_aggregates = true
+
+      raw_results.each_with_index do |record, index|
+        record[:___data_table_index___] = index
+      end
+
+      html = DataTable.render(raw_results) do |t|
+        if has_aggregates
+          t.column :__subtotal_header__, '&nbsp;', width: '30px' do |_v|
+            '&nbsp;'
+          end
+        end
+
+        # COLUMN GROUPS
+        if column_groups.any?
+          t.custom_header do
+            th '', colspan: 1, css: 'column-group', style: 'width: 30px;' unless subtotal_headers.empty?
+
+            column_groups.each do |_column_group_index, column_group|
+              th column_group[:description], colspan: column_group[:column_count], css: 'column-group', style: "width: #{column_group_width}in;"
+            end
+
+            # spacer column
+            th '', colspan: 1, css: 'column-group'
+          end
+        end
+
+        # COLUMNS
+        fields.each do |field|
+          t.column field[:field_name], field[:display_description], css_class: "data-type-#{field[:data_type]}", width: field[:column_width] do |_v, record|
+            record[field[:field_name]]
+          end
+        end
+
+        # SUBTOTAL HEADERS
+        subtotal_headers.each_with_index do |subtotal_header, index|
+          t.group_by subtotal_header[:field_name], level: index
+        end
+
+        # SUBTOTAL AGGREGATES
+        unless subtotal_headers.empty?
+          subtotal_aggregates.each_with_index do |(aggregate_function, columns), index|
+            next if columns.empty?
+
+            t.subtotal :__subtotal_header__, nil, index do |_records, _column, path|
+              "#{path}: #{aggregate_function.to_s.upcase}"
+            end
+
+            columns.each do |column|
+              t.subtotal column[:field_name], aggregate_function, index do |value|
+                value
+              end
+            end
+          end
+        end
+
+        # TOTAL AGGREGATES
+        total_aggregates.each_with_index do |(aggregate_function, columns), index|
+          next if columns.empty?
+
+          t.total :__subtotal_header__, nil, index do |_records|
+            aggregate_function.to_s.upcase
+          end
+
+          columns.each do |column|
+            t.total column[:field_name], aggregate_function, index do |value|
+              value
+            end
+          end
+        end
+
+        # spacer column
+        t.column :_empty_space, ''
+      end
+
+      expected_html = %(<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='__subtotal_header__ ' style='width: 30px'>&nbsp;</th><th class='points  data-type-4' style='width: 3.45'>Points</th><th class='_empty_space ' ></th></tr></thead><tbody class='basketball'><tr class='group_header level_0'><th colspan='3'>Basketball</th></tr><tr class='group_header level_1'><th colspan='3'>9</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >50</td><td class='_empty_space nilclass' ></td></tr><tr class='row_1 alt ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >51</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >9: AVG</td><td class='points numeric data-type-4' >50.5</td><td class='_empty_space nilclass' ></td></tr><tr class='group_header level_1'><th colspan='3'>10</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >52</td><td class='_empty_space nilclass' ></td></tr><tr class='row_1 alt ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >53</td><td class='_empty_space nilclass' ></td></tr><tr class='row_2 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >54</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >10: AVG</td><td class='points numeric data-type-4' >53.0</td><td class='_empty_space nilclass' ></td></tr><tr class='group_header level_1'><th colspan='3'>12</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >55</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >12: AVG</td><td class='points numeric data-type-4' >55.0</td><td class='_empty_space nilclass' ></td></tr><tr class='parent_subtotal index_1 basketball'><td class='__subtotal_header__ nilclass' >Basketball: AVG</td><td class='points numeric data-type-4' >52.5</td><td class='_empty_space nilclass' ></td></tr></tbody></table>)
+      expect(html).to eq(expected_html)
+    end
+  end
 end
