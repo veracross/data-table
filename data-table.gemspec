@@ -13,8 +13,6 @@ Gem::Specification.new do |s|
                     turning an array of hashes or ActiveRecord objects into an
                     HTML table.)
 
-  s.rubyforge_project = 'data-table'
-
   s.add_development_dependency 'rake', '~> 12'
   s.add_development_dependency 'rspec', '~> 3'
   s.add_development_dependency 'guard', '~> 2'
