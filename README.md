@@ -1,6 +1,6 @@
 # DataTable
-[![Build Status](https://secure.travis-ci.org/veracross/data-table.png)](http://travis-ci.org/veracross/data-table)
-[![Code Climate](https://codeclimate.com/github/veracross/data-table.png)](https://codeclimate.com/github/veracross/data-table)
+[![Build Status](https://secure.travis-ci.org/veracross/data-table.svg)](http://travis-ci.org/veracross/data-table)
+[![Code Climate](https://codeclimate.com/github/veracross/data-table.svg)](https://codeclimate.com/github/veracross/data-table)
 
 DataTable renders collections (an array of hashes or ActiveRecord models) as HTML tables.
 
