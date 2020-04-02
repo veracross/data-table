@@ -4,7 +4,7 @@ require 'data-table/version'
 Gem::Specification.new do |s|
   s.name        = 'data-table'
   s.version     = DataTable::VERSION
-  s.licenses    = ['Nonstandard']
+  s.licenses    = ['MIT']
   s.authors     = ['Steve Erickson', 'Jeff Fraser']
   s.email       = ['sixfeetover@gmail.com']
   s.homepage    = 'https://github.com/veracross/data-table'
