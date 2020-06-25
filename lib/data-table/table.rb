@@ -423,6 +423,8 @@ module DataTable
     end
 
     def calculate_avg(collection, column_name)
+      return 0 if collection.empty?
+
       sum = calculate_sum(collection, column_name)
       sum / collection.size
     end

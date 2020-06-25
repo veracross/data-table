@@ -138,6 +138,13 @@ describe DataTable::Table do
       expect(data_table.render).to \
       eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr></tr></thead><tr><td class='empty_data_table' colspan='0'>#{text}</td></tr></table>})
     end
+
+    it "avoids dividing by zero" do
+      data_table.column :power_level
+      data_table.total :power_level, :avg, 0
+      data_table.calculate_totals!
+      expect(data_table.total_calculations).to eq([{:power_level=>0}])
+    end
   end
 
   context 'with a more complicated setup' do
