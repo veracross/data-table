@@ -1,0 +1,56 @@
+version: 2.1
+
+jobs:
+  test:
+    parameters:
+      ruby_version:
+        description: "version tag for the veracross/ruby-app-base container"
+        type: string
+
+    docker:
+      - image: veracross/ruby-app-base:ruby-<< parameters.ruby_version >>
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          name: restore gem cache
+          keys:
+            - v1-bundle-<< parameters.ruby_version >>-{{ .Branch }}-{{ checksum "data-table.gemspec" }}
+            - v1-bundle-<< parameters.ruby_version >>-{{ .Branch }}-
+            - v1-bundle-<< parameters.ruby_version >>-
+
+      - run:
+          name: install dependencies
+          command: |
+            bundle check --path ./vendor/bundle || bundle install --jobs=3 --retry=3 --path vendor/bundle
+            bundle clean
+
+      - save_cache:
+          name: save gem cache
+          paths:
+            - ./vendor/bundle
+          key: v1-bundle-<< parameters.ruby_version >>-{{ .Branch }}-{{ checksum "data-table.gemspec" }}
+
+      - run:
+          name: run tests
+          command: |
+            bundle exec rspec --format RspecJunitFormatter \
+              --out ./tmp/test_results/results.xml \
+              --format progress
+
+      - store_test_results:
+          path: ./tmp/test_results
+
+workflows:
+  test_supported_ruby_versions:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              ruby_version:
+                - '2.5'
+                - '2.7'
+                - '3.1'
