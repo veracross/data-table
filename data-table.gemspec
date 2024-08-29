@@ -13,12 +13,6 @@ Gem::Specification.new do |s|
                     turning an array of hashes or ActiveRecord objects into an
                     HTML table.)
 
-  s.add_development_dependency 'rake', '~> 12'
-  s.add_development_dependency 'rspec', '~> 3'
-  s.add_development_dependency 'rspec_junit_formatter'
-  s.add_development_dependency 'guard', '~> 2'
-  s.add_development_dependency 'guard-rspec', '~> 4'
-
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map { |f| File.basename(f) }
