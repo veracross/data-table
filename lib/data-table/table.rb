@@ -23,7 +23,8 @@ module DataTable
     attr_reader :collection, :grouped_data, :subtotals, :totals,
                 :subtotal_calculations, :total_calculations, :columns
 
-    attr_accessor :id, :title, :subtitle, :css_class, :empty_text,
+    attr_accessor :id, :css_class, :empty_text,
+                  :title, :title_class, :subtitle, :subtitle_class, :title_separator_class,
                   :alternate_rows, :alternate_cols, :display_header, :hide_if_empty,
                   :repeat_headers_for_groups, :custom_headers
 
@@ -41,7 +42,10 @@ module DataTable
     def default_options!
       @id = ''
       @title = ''
+      @title_class = nil
       @subtitle = nil
+      @subtitle_class = nil
+      @title_separator_class = nil
       @css_class = ''
       @empty_text = 'No records found'
       @hide_if_empty = false
@@ -78,9 +82,9 @@ module DataTable
       html = "<table id='#{@id}' class='data_table #{@css_class}' cellspacing='0' cellpadding='0'>"
       html << '<caption>'
       if @title || @subtitle
-        html << "<span class='data_table_title'>#{@title}</span>" if @title
-        html << "<span class='data_table_separator'></span>" if @title && @subtitle
-        html << "<span class='data_table_subtitle'>#{@subtitle}</span>" if @subtitle
+        html << "<span class='#{@title_class}'>#{@title}</span>" if @title
+        html << "<span class='#{@title_separator_class}'></span>" if @title && @subtitle
+        html << "<span class='#{@subtitle_class}'>#{@subtitle}</span>" if @subtitle
       end
       html << '</caption>'
 
