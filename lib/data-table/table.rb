@@ -23,7 +23,7 @@ module DataTable
     attr_reader :collection, :grouped_data, :subtotals, :totals,
                 :subtotal_calculations, :total_calculations, :columns
 
-    attr_accessor :id, :title, :css_class, :empty_text,
+    attr_accessor :id, :title, :subtitle, :css_class, :empty_text,
                   :alternate_rows, :alternate_cols, :display_header, :hide_if_empty,
                   :repeat_headers_for_groups, :custom_headers
 
@@ -41,7 +41,7 @@ module DataTable
     def default_options!
       @id = ''
       @title = ''
-      @subtitle = ''
+      @subtitle = nil
       @css_class = ''
       @empty_text = 'No records found'
       @hide_if_empty = false
@@ -76,7 +76,14 @@ module DataTable
 
     def render_data_table
       html = "<table id='#{@id}' class='data_table #{@css_class}' cellspacing='0' cellpadding='0'>"
-      html << "<caption>#{@title}</caption>" if @title
+      html << '<caption>'
+      if @title || @subtitle
+        html << "<span class='data_table_title'>#{@title}</span>" if @title
+        html << "<span class='data_table_separator'></span>" if @title && @subtitle
+        html << "<span class='data_table_subtitle'>#{@subtitle}</span>" if @subtitle
+      end
+      html << '</caption>'
+
       html << render_data_table_header if @display_header
       if @collection.any?
         html << render_data_table_body(@collection)
@@ -254,7 +261,7 @@ module DataTable
       html = '<tfoot>'
       @total_calculations.each_with_index do |totals_row, index|
         next if totals_row.nil?
-        
+
         html << "<tr class='total index_#{index}'>"
         @columns.each do |col|
           value = totals_row[col.name] ||= nil
@@ -291,7 +298,7 @@ module DataTable
 
       @subtotal_calculations[path].each_with_index do |group, index|
         next if group.empty?
-        
+
         html << "<tr class='subtotal index_#{index} #{'first' if is_first_subtotal}'>"
         @columns.each do |col|
           value = group[col.name] ? group[col.name].values[0] : nil

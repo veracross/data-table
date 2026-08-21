@@ -23,7 +23,7 @@ describe DataTable::Table do
       data_table.column(:name, 'Name')
       data_table.column(:class, 'Class')
       expect(data_table.render).to \
-        eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='name ' >Name</th><th class='class ' >Class</th></tr></thead><tbody><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr><tr class='row_2 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_3 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
+        eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption><span class='data_table_title'></span></caption><thead><tr><th class='name ' >Name</th><th class='class ' >Class</th></tr></thead><tbody><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr><tr class='row_2 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_3 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
     end
 
     it "should group the records" do
@@ -35,7 +35,7 @@ describe DataTable::Table do
       expect(data_table.grouped_data).to be true
       data_table.prepare_data
       expect(data_table.collection).to eq(collection.group_by {|g| g[grouping_column]})
-      expect(data_table.render).to eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='name ' >Name</th><th class='class ' >Class</th></tr></thead><tbody class='star_wars'><tr class='group_header level_0'><th colspan='2'>Star Wars</th></tr><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr></tbody><tbody class='middle_earth'><tr class='group_header level_0'><th colspan='2'>Middle Earth</th></tr><tr class='row_0 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_1 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
+      expect(data_table.render).to eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption><span class='data_table_title'></span></caption><thead><tr><th class='name ' >Name</th><th class='class ' >Class</th></tr></thead><tbody class='star_wars'><tr class='group_header level_0'><th colspan='2'>Star Wars</th></tr><tr class='row_0 ' ><td class='name text' >Luke Skywalker</td><td class='class text' >Jedi Knight</td></tr><tr class='row_1 alt ' ><td class='name text' >Emporer Palpatine</td><td class='class text' >Sith Lord</td></tr></tbody><tbody class='middle_earth'><tr class='group_header level_0'><th colspan='2'>Middle Earth</th></tr><tr class='row_0 ' ><td class='name text' >Mithrander</td><td class='class text' >Wizard</td></tr><tr class='row_1 alt ' ><td class='name text' >Aragorn</td><td class='class text' >Ranger</td></tr></tbody></table>})
     end
 
     it "should do totaling" do
@@ -111,7 +111,7 @@ describe DataTable::Table do
 
       # note how the rows are index_1, and there is no index_0 row
       expect(data_table.render).to \
-      eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='power_level ' ></th></tr></thead><tbody class='star_wars'><tr class='group_header level_0'><th colspan='1'>Star Wars</th></tr><tr class='row_0 ' ><td class='power_level numeric' >50</td></tr><tr class='row_1 alt ' ><td class='power_level numeric' >95</td></tr><tr class='subtotal index_1 first'><td class='power_level numeric' >Star Wars</td></tr></tbody><tbody class='middle_earth'><tr class='group_header level_0'><th colspan='1'>Middle Earth</th></tr><tr class='row_0 ' ><td class='power_level numeric' >9001</td></tr><tr class='row_1 alt ' ><td class='power_level numeric' >80</td></tr><tr class='subtotal index_1 first'><td class='power_level numeric' >Middle Earth</td></tr></tbody></table>})
+      eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption><span class='data_table_title'></span></caption><thead><tr><th class='power_level ' ></th></tr></thead><tbody class='star_wars'><tr class='group_header level_0'><th colspan='1'>Star Wars</th></tr><tr class='row_0 ' ><td class='power_level numeric' >50</td></tr><tr class='row_1 alt ' ><td class='power_level numeric' >95</td></tr><tr class='subtotal index_1 first'><td class='power_level numeric' >Star Wars</td></tr></tbody><tbody class='middle_earth'><tr class='group_header level_0'><th colspan='1'>Middle Earth</th></tr><tr class='row_0 ' ><td class='power_level numeric' >9001</td></tr><tr class='row_1 alt ' ><td class='power_level numeric' >80</td></tr><tr class='subtotal index_1 first'><td class='power_level numeric' >Middle Earth</td></tr></tbody></table>})
     end
 
     it "should render a custom header" do
@@ -129,14 +129,14 @@ describe DataTable::Table do
 
     it "should render a table with the 'no records' message" do
       expect(data_table.render).to \
-        eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr></tr></thead><tr><td class='empty_data_table' colspan='0'>No records found</td></tr></table>})
+        eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption><span class='data_table_title'></span></caption><thead><tr></tr></thead><tr><td class='empty_data_table' colspan='0'>No records found</td></tr></table>})
     end
 
     it "should render a custom empty text notice" do
       text = "Nothing to see here"
       data_table.empty_text = text
       expect(data_table.render).to \
-      eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr></tr></thead><tr><td class='empty_data_table' colspan='0'>#{text}</td></tr></table>})
+      eq(%{<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption><span class='data_table_title'></span></caption><thead><tr></tr></thead><tr><td class='empty_data_table' colspan='0'>#{text}</td></tr></table>})
     end
 
     it "avoids dividing by zero" do
@@ -274,8 +274,42 @@ describe DataTable::Table do
         t.column :_empty_space, ''
       end
 
-      expected_html = %(<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption></caption><thead><tr><th class='__subtotal_header__ ' style='width: 30px'>&nbsp;</th><th class='points  data-type-4' style='width: 3.45'>Points</th><th class='_empty_space ' ></th></tr></thead><tbody class='basketball'><tr class='group_header level_0'><th colspan='3'>Basketball</th></tr><tr class='group_header level_1'><th colspan='3'>9</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >50</td><td class='_empty_space nilclass' ></td></tr><tr class='row_1 alt ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >51</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >9: AVG</td><td class='points numeric data-type-4' >50.5</td><td class='_empty_space nilclass' ></td></tr><tr class='group_header level_1'><th colspan='3'>10</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >52</td><td class='_empty_space nilclass' ></td></tr><tr class='row_1 alt ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >53</td><td class='_empty_space nilclass' ></td></tr><tr class='row_2 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >54</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >10: AVG</td><td class='points numeric data-type-4' >53.0</td><td class='_empty_space nilclass' ></td></tr><tr class='group_header level_1'><th colspan='3'>12</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >55</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >12: AVG</td><td class='points numeric data-type-4' >55.0</td><td class='_empty_space nilclass' ></td></tr><tr class='parent_subtotal index_1 basketball'><td class='__subtotal_header__ nilclass' >Basketball: AVG</td><td class='points numeric data-type-4' >52.5</td><td class='_empty_space nilclass' ></td></tr></tbody></table>)
+      expected_html = %(<table id='' class='data_table ' cellspacing='0' cellpadding='0'><caption><span class='data_table_title'></span></caption><thead><tr><th class='__subtotal_header__ ' style='width: 30px'>&nbsp;</th><th class='points  data-type-4' style='width: 3.45'>Points</th><th class='_empty_space ' ></th></tr></thead><tbody class='basketball'><tr class='group_header level_0'><th colspan='3'>Basketball</th></tr><tr class='group_header level_1'><th colspan='3'>9</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >50</td><td class='_empty_space nilclass' ></td></tr><tr class='row_1 alt ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >51</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >9: AVG</td><td class='points numeric data-type-4' >50.5</td><td class='_empty_space nilclass' ></td></tr><tr class='group_header level_1'><th colspan='3'>10</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >52</td><td class='_empty_space nilclass' ></td></tr><tr class='row_1 alt ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >53</td><td class='_empty_space nilclass' ></td></tr><tr class='row_2 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >54</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >10: AVG</td><td class='points numeric data-type-4' >53.0</td><td class='_empty_space nilclass' ></td></tr><tr class='group_header level_1'><th colspan='3'>12</th></tr><tr class='row_0 ' ><td class='__subtotal_header__ nilclass' >&nbsp;</td><td class='points numeric data-type-4' >55</td><td class='_empty_space nilclass' ></td></tr><tr class='subtotal index_1 first'><td class='__subtotal_header__ nilclass' >12: AVG</td><td class='points numeric data-type-4' >55.0</td><td class='_empty_space nilclass' ></td></tr><tr class='parent_subtotal index_1 basketball'><td class='__subtotal_header__ nilclass' >Basketball: AVG</td><td class='points numeric data-type-4' >52.5</td><td class='_empty_space nilclass' ></td></tr></tbody></table>)
       expect(html).to eq(expected_html)
+    end
+  end
+
+  context 'with a title and no subtitle' do
+    it 'renders the title' do
+      table = DataTable::Table.new([])
+      table.title = 'My Table Title'
+      html = table.render
+      expect(html).to include("<span class='data_table_title'>My Table Title</span>")
+    end
+  end
+
+  context 'with a subtitle and no title' do
+    it 'renders the subtitle' do
+      table = DataTable::Table.new([])
+      table.subtitle = 'My Subtitle'
+      html = table.render
+
+      expect(html).to include("<span class='data_table_title'></span>")
+      expect(html).to include("<span class='data_table_separator'></span>")
+      expect(html).to include("<span class='data_table_subtitle'>My Subtitle</span>")
+    end
+  end
+
+  context 'with a title and a subtitle' do
+    it 'renders the subtitle' do
+      table = DataTable::Table.new([])
+      table.title = 'My Table Title'
+      table.subtitle = 'My Subtitle'
+      html = table.render
+
+      expect(html).to include("<span class='data_table_title'>My Table Title</span>")
+      expect(html).to include("<span class='data_table_separator'></span>")
+      expect(html).to include("<span class='data_table_subtitle'>My Subtitle</span>")
     end
   end
 end
